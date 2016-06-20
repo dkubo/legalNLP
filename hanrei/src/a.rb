@@ -13,7 +13,7 @@ DB_PATH="../data/hanreiDB"
 def main()
 	db=SQLight3.new(DB_PATH)
 	text=""
-	result=[]
+	hash=Hash.new(0)
 	cnt=0
 	sum_cnt=0
 	sql="select id from hanrei"
@@ -21,15 +21,17 @@ def main()
 	cursorID.each do |tuple_id|
 #		puts "---------------------------"
 		id_ = tuple_id[0]
-		sql="select riyuPart,summary from hanrei where id=#{id_}"
+		sql="select riyuPart,summary,trialYear from hanrei where id=#{id_}"
 		cursor=db.executeSQL(sql)
 		cursor.each do |tuple|
 			riyu = tuple[0]
 			summary = tuple[1]
+			trialYear = tuple[2]
 			if summary != nil then
 				summary=summary.delete(" 　").strip
 				if "" != summary then
 					sum_cnt+=1
+					hash[trialYear]+=1
 				end
 			end
 #			text += syubun.delete("\n")
@@ -38,7 +40,9 @@ def main()
 #			result=sp.split_period()
 		end
 		cnt+=1
-		puts sum_cnt.to_s+"/"+cnt.to_s
+		for k,v in hash do
+			puts k+"："+v.to_s+"/"+cnt.to_s
+		end
 	end
 	db.closeDB
 end
