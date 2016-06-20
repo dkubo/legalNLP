@@ -2,9 +2,9 @@
 
 require './sqlite3.rb'
 require './senSplit.rb'
+
 """
-判決文の文分割を行う
-・目次の情報も参照する必要あり
+判決要旨がどれくらいの割合で存在するか確かめる
 
 """
 
@@ -14,21 +14,31 @@ def main()
 	db=SQLight3.new(DB_PATH)
 	text=""
 	result=[]
-	sql="select id,riyuPart,summary from hanrei"
+	cnt=0
+	sum_cnt=0
+	sql="select id from hanrei"
 	cursorID=db.executeSQL(sql)
 	cursorID.each do |tuple_id|
-		puts tuple_id[0]+"|"+tuple_id[2]
-#		sql="select syubunPart,riyuPart from hanrei where id='3159'"
-#		cursor=db.executeSQL(sql)
-#		cursor.each do |tuple|
-#			syubun = tuple[0]
-#			riyu = tuple[1]
+#		puts "---------------------------"
+		id_ = tuple_id[0]
+		sql="select riyuPart,summary from hanrei where id=#{id_}"
+		cursor=db.executeSQL(sql)
+		cursor.each do |tuple|
+			riyu = tuple[0]
+			summary = tuple[1]
+			if summary != nil then
+				summary=summary.delete(" 　").strip
+				if "" != summary then
+					sum_cnt+=1
+				end
+			end
 #			text += syubun.delete("\n")
 #			text += riyu.delete("\n")
 #			sp=SenSplit.new(text)
 #			result=sp.split_period()
-#			puts result
-#		end
+		end
+		cnt+=1
+		puts sum_cnt.to_s+"/"+cnt.to_s
 	end
 	db.closeDB
 end
