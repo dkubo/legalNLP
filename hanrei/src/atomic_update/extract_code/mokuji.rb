@@ -14,7 +14,7 @@ require './class/mokuji_class.rb'
 #						main
 ##########################################
 #SOURCE_ROOT = ARGV[0]
-SOURCE_ROOT = "/home/daiki/デスクトップ/naist/hanrei/data/text"
+SOURCE_ROOT = "../../../data/text"
 #REGI_ROOT = ARGV[1]
 PATTERN = '**/**/**/*.csv'
 #sort_hanketubun = Sort_Hanketubun.new()
