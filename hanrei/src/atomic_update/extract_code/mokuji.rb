@@ -22,8 +22,7 @@ mokuji_fail = []					#目次作成に失敗したファイルリスト
 Dir.chdir(SOURCE_ROOT)
 #ファイル名の取得
 Dir.glob(PATTERN) do |file|
-#	file="3/8/2/38219.csv"
-	puts "----------------------------------"
+	puts "---------------------------------------"
 	puts "ファイル名："+file
 	#オブジェクト生成
 #	mokuji_atomic = Atomic_Update.new()
