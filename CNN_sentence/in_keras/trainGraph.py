@@ -1,3 +1,4 @@
+#coding:utf-8
 """
 Train convolutional network for sentiment analysis. Based on
 "Convolutional Neural Networks for Sentence Classification" by Yoon Kim
