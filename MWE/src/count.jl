@@ -16,6 +16,24 @@ const BCCWJ_ROOT="../data/core_M-XML"
 const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 
 
+###############################
+#		sentenceノードを返す
+###############################
+function parseXML(xroot,arr)
+	for c in child_nodes(xroot)  # c is an instance of XMLNode
+		if is_elementnode(c)
+			e = XMLElement(c)  # this makes an XMLElement instance
+			if "sentence" == name(e)
+				push!(arr,c)
+			else
+				parseXML(e,arr)
+			end
+		end
+	end
+	return arr
+end
+
+
 #jdmwe = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D, :E, :F, :G, :H])
 #println(jdmwe)
 
@@ -31,9 +49,18 @@ const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 #XMLファイルオープン
 child = readdir(BCCWJ_ROOT)
 for xfile in child
+	arr=[]
+	println("--------------------------")
+	path=BCCWJ_ROOT*"/"*xfile
 	#xmlパーズ
-	xdoc = parse_file(xfile)
+	xdoc = parse_file(path)
+	xroot = root(xdoc)
+	arr = parseXML(xroot,arr)
+	for part in arr
 	
+#		r = content(part)		#originalText
+#		println(r)
+	end
 end
 
 
