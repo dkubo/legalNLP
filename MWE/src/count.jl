@@ -1,7 +1,8 @@
 #coding:utf-8
 
 using ExcelReaders
-using LightXML
+#using LightXML
+using LibExpat
 using DataFrames
 
 """
@@ -15,23 +16,6 @@ Daiki Kubo
 const BCCWJ_ROOT="../data/core_M-XML"
 const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 
-
-###############################
-#		sentenceノードを返す
-###############################
-function parseXML(xroot,arr)
-	for c in child_nodes(xroot)  # c is an instance of XMLNode
-		if is_elementnode(c)
-			e = XMLElement(c)  # this makes an XMLElement instance
-			if "sentence" == name(e)
-				push!(arr,c)
-			else
-				parseXML(e,arr)
-			end
-		end
-	end
-	return arr
-end
 
 
 #jdmwe = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D, :E, :F, :G, :H])
@@ -47,24 +31,32 @@ end
 #println(bccwj)
 
 #XMLファイルオープン
-child = readdir(BCCWJ_ROOT)
-for xfile in child
-	arr=[]
+#child = readdir(BCCWJ_ROOT)
+#for xfile in child
+	xfile="OC01_00001.xml"
+	arr = []
 	println("--------------------------")
-	path=BCCWJ_ROOT*"/"*xfile
-	#xmlパーズ
-	xdoc = parse_file(path)
-	xroot = root(xdoc)
-	arr = parseXML(xroot,arr)
-	for part in arr
-	
-#		r = content(part)		#originalText
-#		println(r)
+	path = BCCWJ_ROOT*"/"*xfile
+	doc = open(path) do fp
+		readall(fp)
 	end
-end
 
-
-
+	#xmlパーズ
+	root_node = xp_parse(doc)
+	sentence_node = LibExpat.find(root_node,"/mergedSample//sentence")
+	for sen_part in sentence_node
+		println("--------------------------")
+		sen_part = xp_parse(string(sen_part))
+		suw_node = LibExpat.find(sen_part,"/sentence/LUW/SUW")
+		for suw in suw_node
+			try
+				@show suw.attr["kana"]
+			catch e
+				@show suw.attr["formBase"]
+			end
+		end
+	end
+#end
 
 #open(file) do bccwj
 #	sentence=""
