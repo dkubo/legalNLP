@@ -27,8 +27,14 @@ jdmwe_df = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D
 
 #まずは品詞の制約なし
 #println(length(jdmwe_df[:B]))		#4449
+#.:内部修飾, _:異字種で表記可能
 for mwe in jdmwe_df[:B]
-	println(split(mwe,"-"))
+#	println(split(mwe,"-"))
+	mwe = replace(mwe,"_","")		#_を消去
+	mwe = replace(mwe,".","-.-")		#先頭以外の.を-.-に置換	
+	mwe = split(mwe,"-")
+	filter!(e->e≠"",mwe)
+	println(mwe)
 end
 #トライ木:http://datastructuresjl.readthedocs.io/en/latest/trie.html?highlight=trie
 
