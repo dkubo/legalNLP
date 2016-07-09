@@ -19,10 +19,22 @@ Daiki Kubo
 const BCCWJ_ROOT="../data/core_M-XML"
 const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 
+########################
+#		JDMWE読込
+########################
+jdmwe_df = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D, :E, :F, :G, :H])
+#println(jdmwe_df[[:B,:E]])
 
-
+#まずは品詞の制約なし
+#println(length(jdmwe_df[:B]))		#4449
+for mwe in jdmwe_df[:B]
+	println(split(mwe,"-"))
+end
 #トライ木:http://datastructuresjl.readthedocs.io/en/latest/trie.html?highlight=trie
 
+########################
+#		BCCWJ読込
+########################
 #BCCWJ_CORE_M-XMLファイルオープン
 #child = readdir(BCCWJ_ROOT)
 #for xfile in child
@@ -59,20 +71,5 @@ const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 #	end
 #end
 
-jdmwe = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D, :E, :F, :G, :H])
-println(jdmwe)
 
-#open(file) do bccwj
-#	sentence=""
-#	for line in eachline(bccwj)
-#		data = split(line,'\t')
-#    BI_label,formBase,originalText = data[10],data[20],data[24]
-#		if BI_label == "B"
-#			println(sentence)
-#			sentence=formBase
-#		else
-#			sentence *= formBase
-#		end
-#	end
-#end
 
