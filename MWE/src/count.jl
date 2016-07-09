@@ -1,9 +1,12 @@
 #coding:utf-8
 
 using ExcelReaders
+using PyCall
 #using LightXML
 using LibExpat
 using DataFrames
+
+@pyimport jcconv
 
 """
 JDMWEのエントリとBCCWJのCORE_SUWとのマッチング
@@ -31,32 +34,40 @@ const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 #println(bccwj)
 
 #XMLファイルオープン
-#child = readdir(BCCWJ_ROOT)
-#for xfile in child
-	xfile="OC01_00001.xml"
-	arr = []
+child = readdir(BCCWJ_ROOT)
+for xfile in child
+#	xfile="OC01_00001.xml"
 	println("--------------------------")
 	path = BCCWJ_ROOT*"/"*xfile
 	doc = open(path) do fp
 		readall(fp)
 	end
-
 	#xmlパーズ
 	root_node = xp_parse(doc)
-	sentence_node = LibExpat.find(root_node,"/mergedSample//sentence")
-	for sen_part in sentence_node
+	sentence_nodes = LibExpat.find(root_node,"/mergedSample//sentence")
+	for sentence_node in sentence_nodes
 		println("--------------------------")
-		sen_part = xp_parse(string(sen_part))
-		suw_node = LibExpat.find(sen_part,"/sentence/LUW/SUW")
-		for suw in suw_node
+		sentence = ""
+		yomi_sentence = ""
+		yomi = ""
+		suw = ""
+		sentence_node = xp_parse(string(sentence_node))
+		suw_nodes = LibExpat.find(sentence_node,"/sentence//SUW")
+		for suw_node in suw_nodes
+			suw = suw_node.elements[1]
+			sentence *= suw			
 			try
-				@show suw.attr["kana"]
+				yomi = suw_node.attr["kana"]
 			catch e
-				@show suw.attr["formBase"]
+				yomi = suw_node.attr["formBase"]
 			end
+			yomi_sentence *= yomi
 		end
+#		@show path
+		@show sentence
+		@show jcconv.kata2hira(yomi_sentence)
 	end
-#end
+end
 
 #open(file) do bccwj
 #	sentence=""
