@@ -34,10 +34,9 @@ function loadMWE()
 	#.:内部修飾, _:異字種で表記可能
 	for mwe in jdmwe_df[:B]
 	#	println(split(mwe,"-"))
-		mwe = replace(mwe,r"(_|-)","")		#_を消去
-		mwe = replace(mwe,".",".*")		#先頭以外の.を-.-に置換	
-#		mwe = replace(mwe,".","-.-")		#先頭以外の.を-.-に置換	
-#		mwe = split(mwe,"-")
+		mwe = replace(mwe,"_","")		#_を消去
+		mwe = replace(mwe,".","-.-")		#先頭以外の.を-.-に置換	
+		mwe = split(mwe,"-")
 #		push!(mwe_dict,filter(e->e≠"",mwe))
 		push!(mwe_dict,mwe)
 	end
@@ -45,11 +44,9 @@ function loadMWE()
 end
 
 mwe_dict = loadMWE()
-#println(mwe_dict)
 #BCCWJ_CORE_M-XMLファイルオープン
 child = readdir(BCCWJ_ROOT)
-#for xfile in child
-	xfile="OC01_00001.xml"
+for xfile in child
 	println("--------------------------")
 	path = BCCWJ_ROOT*"/"*xfile
 	doc = open(path) do fp
@@ -60,30 +57,41 @@ child = readdir(BCCWJ_ROOT)
 	sentence_nodes = LibExpat.find(root_node,"/mergedSample//sentence")
 	for sentence_node in sentence_nodes
 		println("--------------------------")
-		sentence = []
-		yomi_sentence = ""
-#		yomi_sentence = []
+		######################################
+		#		初期化
+		######################################
+		origin_sentence = []
+#		yomi_sentence = ""
+		yomi_sentence = []
 		yomi = ""
 		suw = ""
+		######################################
 		sentence_node = xp_parse(string(sentence_node))
 		suw_nodes = LibExpat.find(sentence_node,"/sentence//SUW")
 		for suw_node in suw_nodes
 			suw = suw_node.elements[1]
-			push!(sentence,suw)
+			push!(origin_sentence,suw)
 			try
 				yomi = suw_node.attr["kana"]
 			catch e
 				yomi = suw_node.attr["formBase"]
 			end
-#			push!(yomi_sentence,jcconv.kata2hira(yomi))
-			yomi_sentence *= jcconv.kata2hira(yomi)
+			push!(yomi_sentence,filter(e->e≠"",jcconv.kata2hira(yomi)))
+
+#			yomi_sentence *= jcconv.kata2hira(yomi)
 		end
-		for mwe in mwe_dict
-			@show ismatch(mwe,yomi_sentence)
-		end
-#		@show yomi_sentence
+		@show origin_sentence
+		@show yomi_sentence
+		#mweをループさせる
+#		for mwe in mwe_dict
+#			reg = Regex(mwe)
+#			if ismatch(reg, yomi_sentence) == true
+#				@show mwe
+#				@show yomi_sentence
+#			end
+#		end
 	end
-#end
+end
 
 
 
