@@ -20,8 +20,6 @@ Daiki Kubo
 const BCCWJ_ROOT="../data/core_M-XML"
 const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 
-#trie: https://github.com/JuliaLang/DataStructures.jl/blob/master/src/trie.jl
-
 ################################################
 #	JDMWE読込
 ################################################
@@ -45,9 +43,36 @@ function loadMWE()
 	return trie
 end
 
+################################################
+#	トライ木探索
+################################################
+function search_trie(trie,yomi_sentence)
+	match_mwe = ""
+	match_yomi = []
+	for yomi in yomi_sentence
+		buff = keys_with_prefix(trie, yomi)
+		if length(buff) == 1		#マッチ
+			trie = subtrie(trie, yomi)
+			match_mwe *= yomi
+			push!(match_yomi,yomi)
+		end
+	end
+	if length(keys(trie)) != 1			#完全マッチでない場合
+		match_mwe = ""
+	end
+	#yomi_sentenceからマッチ要素を削除
+	deleteat!(yomi_sentence, findin(yomi_sentence,[match_yomi]))	
+	@show yomi_sentence
+	return match_mwe,yomi_sentence
+end
+
+
+################################################
+#	main
+################################################
 trie = loadMWE()
 #@show trie
-#@show subtrie(trie, "あいそ")
+#@show subtrie(trie, "")	#trieが返ってくる
 
 #BCCWJ_CORE_M-XMLファイルオープン
 child = readdir(BCCWJ_ROOT)
@@ -66,12 +91,9 @@ for xfile in child
 		#		初期化
 		######################################
 		origin_sentence = []
-#		yomi_sentence = ""
 		yomi_sentence = []
+		match_array = []
 		yomi = ""
-		suw = ""
-		match_mwe = ""
-		trie_parse = trie
 		######################################
 		#		XMLパーズ
 		######################################
@@ -87,18 +109,18 @@ for xfile in child
 			end
 			push!(yomi_sentence,jcconv.kata2hira(yomi))
 		end
-#		@show origin_sentence
-#		@show yomi_sentence
 		######################################
 		#		マッチング
 		######################################
-		for yomi in yomi_sentence
-			buff = keys_with_prefix(trie_parse, yomi)
-			if length(buff) == 1		#マッチ
-				trie_parse = subtrie(trie_parse, yomi)
-				match_mwe *= yomi
-			end
-		end
+		match,yomi_sentence = search_trie(trie,yomi_sentence)
+#		push!(match_array,match)
+#		while match != ""		#他のMWEがマッチする可能性も考慮
+#			match = search_trie(trie,yomi_sentence)
+#			push!(match_array,match)
+#		end
+#		@show origin_sentence
+#		@show yomi_sentence
+#		@show match_array
 		######################################
 	end
 end
