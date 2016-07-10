@@ -2,11 +2,11 @@
 
 using ExcelReaders
 using PyCall
-#using LightXML
 using LibExpat
 using DataFrames
-
 @pyimport jcconv
+
+#using LightXML
 
 """
 JDMWEのエントリとBCCWJのCORE_SUWとのマッチング
@@ -34,10 +34,12 @@ function loadMWE()
 	#.:内部修飾, _:異字種で表記可能
 	for mwe in jdmwe_df[:B]
 	#	println(split(mwe,"-"))
-		mwe = replace(mwe,"_","")		#_を消去
-		mwe = replace(mwe,".","-.-")		#先頭以外の.を-.-に置換	
-		mwe = split(mwe,"-")
-		push!(mwe_dict,filter(e->e≠"",mwe))
+		mwe = replace(mwe,r"(_|-)","")		#_を消去
+		mwe = replace(mwe,".",".*")		#先頭以外の.を-.-に置換	
+#		mwe = replace(mwe,".","-.-")		#先頭以外の.を-.-に置換	
+#		mwe = split(mwe,"-")
+#		push!(mwe_dict,filter(e->e≠"",mwe))
+		push!(mwe_dict,mwe)
 	end
 	return mwe_dict
 end
@@ -59,7 +61,8 @@ child = readdir(BCCWJ_ROOT)
 	for sentence_node in sentence_nodes
 		println("--------------------------")
 		sentence = []
-		yomi_sentence = []
+		yomi_sentence = ""
+#		yomi_sentence = []
 		yomi = ""
 		suw = ""
 		sentence_node = xp_parse(string(sentence_node))
@@ -72,10 +75,12 @@ child = readdir(BCCWJ_ROOT)
 			catch e
 				yomi = suw_node.attr["formBase"]
 			end
-			push!(yomi_sentence,jcconv.kata2hira(yomi))
+#			push!(yomi_sentence,jcconv.kata2hira(yomi))
+			yomi_sentence *= jcconv.kata2hira(yomi)
 		end
-#		@show path
-#		@show sentence
+		for mwe in mwe_dict
+			@show ismatch(mwe,yomi_sentence)
+		end
 #		@show yomi_sentence
 	end
 #end
