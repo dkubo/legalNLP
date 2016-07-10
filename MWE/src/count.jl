@@ -21,9 +21,9 @@ const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 
 #trie: https://github.com/JuliaLang/DataStructures.jl/blob/master/src/trie.jl
 
-########################
-#		JDMWE読込
-########################
+################################################
+#	JDMWE読込
+################################################
 function loadMWE()
 	mwe_dict = []
 	jdmwe_df = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D, :E, :F, :G, :H])
@@ -34,12 +34,14 @@ function loadMWE()
 	#.:内部修飾, _:異字種で表記可能
 	for mwe in jdmwe_df[:B]
 	#	println(split(mwe,"-"))
-		mwe = replace(mwe,"_","")		#_を消去
+		mwe = replace(mwe,r"(^\.|_)","")		#_と先頭の.を消去
 		mwe = replace(mwe,".","-.-")		#先頭以外の.を-.-に置換	
 		mwe = split(mwe,"-")
 #		push!(mwe_dict,filter(e->e≠"",mwe))
 		push!(mwe_dict,mwe)
 	end
+	println(jdmwe_df[:B])
+	println(mwe_dict)
 	return mwe_dict
 end
 
@@ -66,6 +68,8 @@ for xfile in child
 		yomi = ""
 		suw = ""
 		######################################
+		#		XMLパーズ
+		######################################
 		sentence_node = xp_parse(string(sentence_node))
 		suw_nodes = LibExpat.find(sentence_node,"/sentence//SUW")
 		for suw_node in suw_nodes
@@ -77,17 +81,25 @@ for xfile in child
 				yomi = suw_node.attr["formBase"]
 			end
 			push!(yomi_sentence,filter(e->e≠"",jcconv.kata2hira(yomi)))
-
-#			yomi_sentence *= jcconv.kata2hira(yomi)
 		end
-		@show origin_sentence
-		@show yomi_sentence
-		#mweをループさせる
+
+		######################################
+		#		マッチング
+		######################################
 #		for mwe in mwe_dict
-#			reg = Regex(mwe)
-#			if ismatch(reg, yomi_sentence) == true
-#				@show mwe
-#				@show yomi_sentence
+#			mwe_frg = 0
+#			for mwe_part in mwe
+#				for yomi in yomi_sentence
+#	#				reg = Regex(mwe)
+#					if yomi == mwe_part
+#						mwe_frg = 1
+#						@show mwe_part
+#						@show yomi_sentence
+#					else
+#						mwe_frg = 0					
+#					end					
+#	#				if ismatch(reg, yomi) == true
+#				end
 #			end
 #		end
 	end
