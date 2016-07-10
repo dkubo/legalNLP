@@ -36,7 +36,7 @@ function loadMWE()
 	#.:内部修飾, _:異字種で表記可能
 	for mwe in jdmwe_df[:B]
 	#	println(split(mwe,"-"))
-		mwe = replace(mwe,r"(^\.|_|-)","")		#_と先頭の.を消去
+		mwe = replace(mwe,r"(\.|_|-)","")		#_と先頭の.を消去
 #		mwe = replace(mwe,".","-.-")		#先頭以外の.を-.-に置換	
 #		mwe = split(mwe,"-")
 		trie[mwe] = cnt
@@ -46,67 +46,71 @@ function loadMWE()
 end
 
 trie = loadMWE()
-@show trie
-@show subtrie(trie, "あいそ")
+#@show trie
+#@show subtrie(trie, "あいそ")
 
 #BCCWJ_CORE_M-XMLファイルオープン
-#child = readdir(BCCWJ_ROOT)
-#for xfile in child
-#	println("--------------------------")
-#	path = BCCWJ_ROOT*"/"*xfile
-#	doc = open(path) do fp
-#		readall(fp)
-#	end
-#	#xmlパーズ
-#	root_node = xp_parse(doc)
-#	sentence_nodes = LibExpat.find(root_node,"/mergedSample//sentence")
-#	for sentence_node in sentence_nodes
-#		println("--------------------------")
-#		######################################
-#		#		初期化
-#		######################################
-#		origin_sentence = []
-##		yomi_sentence = ""
-#		yomi_sentence = []
-#		yomi = ""
-#		suw = ""
-#		######################################
-#		#		XMLパーズ
-#		######################################
-#		sentence_node = xp_parse(string(sentence_node))
-#		suw_nodes = LibExpat.find(sentence_node,"/sentence//SUW")
-#		for suw_node in suw_nodes
-#			suw = suw_node.elements[1]
-#			push!(origin_sentence,suw)
-##			try
-##				yomi = suw_node.attr["kana"]
-##			catch e
-##				yomi = suw_node.attr["formBase"]
-##			end
-##			push!(yomi_sentence,filter(e->e≠"",jcconv.kata2hira(yomi)))
-#		end
+child = readdir(BCCWJ_ROOT)
+for xfile in child
+	println("--------------------------")
+	path = BCCWJ_ROOT*"/"*xfile
+	doc = open(path) do fp
+		readall(fp)
+	end
+	#xmlパーズ
+	root_node = xp_parse(doc)
+	sentence_nodes = LibExpat.find(root_node,"/mergedSample//sentence")
+	for sentence_node in sentence_nodes
+		println("--------------------------")
+		######################################
+		#		初期化
+		######################################
+		origin_sentence = []
+#		yomi_sentence = ""
+		yomi_sentence = []
+		yomi = ""
+		suw = ""
+		match_mwe = ""
+		trie_parse = trie
+		######################################
+		#		XMLパーズ
+		######################################
+		sentence_node = xp_parse(string(sentence_node))
+		suw_nodes = LibExpat.find(sentence_node,"/sentence//SUW")
+		for suw_node in suw_nodes
+			suw = suw_node.elements[1]
+			push!(origin_sentence,suw)
+			try
+				yomi = suw_node.attr["kana"]
+			catch e
+				yomi = suw_node.attr["formBase"]
+			end
+			push!(yomi_sentence,jcconv.kata2hira(yomi))
+		end
+#		@show origin_sentence
+#		@show yomi_sentence
+		######################################
+		#		マッチング
+		######################################
+		for yomi in yomi_sentence
+			buff = keys_with_prefix(trie_parse, yomi)
+			if length(buff) == 1		#マッチ
+				trie_parse = subtrie(trie_parse, yomi)
+				match_mwe *= yomi
+			end
+		end
+		######################################
+	end
+end
 
-#		######################################
-#		#		マッチング
-#		######################################
-##		for mwe in mwe_dict
-##			mwe_frg = 0
-##			for mwe_part in mwe
-##				reg = Regex(mwe_part)
-##				for yomi in yomi_sentence
-##					if yomi == mwe_part
-##						mwe_frg = 1
-##						@show mwe_part
-##						@show yomi_sentence
-##					else
-##						mwe_frg = 0					
-##					end
-##					
-##					if ismatch(reg, yomi) == true
-##				end
-##			end
-##		end
-#	end
-#end
+
+
+
+
+
+
+
+
+
 
 
