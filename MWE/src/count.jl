@@ -14,6 +14,7 @@ JDMWEのエントリとBCCWJのCORE_SUWとのマッチング
 Daiki Kubo
 2016/7/8
 ・To do
+⇛たまにタグが抽出されてるものがあるから、正規表現で消す(見つけたの：<enclosedCharacter description>)
 ⇛内部修飾句に対する制約：col. Eを使う(MWEの外は制約なくてもよさげ？文法規則的に無くても問題なさそう)
 ※内部修飾しなくてもOKということに注意
 ・アルゴリズム案：
