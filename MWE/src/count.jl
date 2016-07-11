@@ -152,6 +152,7 @@ for xfile in child
 #			@show origin_sentence
 #			@show yomi_sentence
 			@show match_array
+			@show matched_mwe_count
 		end
 		######################################
 	end
