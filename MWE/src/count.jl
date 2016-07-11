@@ -148,6 +148,7 @@ for xfile in child
 				else
 					matched_mwe_count[matched] += 1				
 				end
+			end
 #			@show origin_sentence
 #			@show yomi_sentence
 			@show match_array
