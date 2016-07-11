@@ -13,7 +13,13 @@ using DataStructures
 JDMWEのエントリとBCCWJのCORE_SUWとのマッチング
 Daiki Kubo
 2016/7/8
-
+・To do
+⇛内部修飾句に対する制約：col. Eを使う(MWEの外は制約なくてもよさげ？文法規則的に無くても問題なさそう)
+・アルゴリズム案：
+1.col. Eを参照して、内部修飾があるかどうか判定
+2.あれば、マッチング(トライ木の探索)の際に、マッチした語のインデックスを取得
+3.マッチしたMWEの内部の語の配列を取得(array[2(マッチ始め):4(マッチ終わり)])
+4.内部修飾の品詞をマッチング
 """
 
 #const BCCWJ_PATH="../data/core_SUW.txt"		←このtsvファイルは使わない
@@ -79,8 +85,10 @@ end
 #	main
 ################################################
 sen_cnt = 0		#文数カウント
-lex_cnt = 0		#エントリ数カウント
-matched_mwe_count = Dict{UTF8String,Int64}()			#マッチしたMWEをカウントする(k:MWE,v:cnt)
+lex_cnt = 0		#エントリ数カウント(idiom:4449)
+mwe_cnt = 0		#マッチしたMWEをカウント
+
+matched_mwe_hash = Dict{UTF8String,Int64}()		#マッチしたMWEをカウントする(k:MWE,v:cnt)
 trie,lex_cnt = loadMWE()
 #@show trie
 #@show subtrie(trie, "")	#trieが返ってくる
@@ -144,20 +152,25 @@ for xfile in child
 			for matched in match_array
 				value = get(matched_mwe_count,matched,0)
 				if value == 0			#キーが存在しなかった場合
-					matched_mwe_count[matched] = 1
+					matched_mwe_hash[matched] = 1
+					mwe_cnt += 1
 				else
-					matched_mwe_count[matched] += 1				
+					matched_mwe_hash[matched] += 1				
+					mwe_cnt += 1
 				end
 			end
-#			@show origin_sentence
+			@show origin_sentence
 #			@show yomi_sentence
 			@show match_array
-			@show matched_mwe_count
+#			@show matched_mwe_hash
 		end
 		######################################
 	end
 end
 
+ratio = mwe_cnt/sen_cnt
+println("MWE(idiom)出現数/BCCWJ総文数 = "*mwe_cnt*"/"*sen_cnt"="ratio)
+@show matched_mwe_hash
 
 
 
