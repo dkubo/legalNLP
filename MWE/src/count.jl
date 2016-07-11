@@ -28,7 +28,7 @@ function loadMWE()
 	trie = Trie{Int}()			#トライ木宣言
 	cnt = 1
 	jdmwe_df = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D, :E, :F, :G, :H])
-	#println(jdmwe_df[[:B,:E]])
+#	println(jdmwe_df[[:B,:E]])
 
 	#まずは品詞の制約なし
 	lex_cnt = length(jdmwe_df[:B])		#4449
@@ -51,6 +51,7 @@ function search_trie(trie,yomi_sentence)
 	match_mwe = ""
 	pmatch = ""				#マッチした部分下のsubtrie文字列
 	match_yomi = []
+#	@show yomi_sentence
 	for yomi in yomi_sentence
 		if yomi != ""
 			buff = keys_with_prefix(trie, yomi)
@@ -62,17 +63,16 @@ function search_trie(trie,yomi_sentence)
 		end
 	end
 	try
-		pmatch = keys(trie)			#完全マッチでない場合
+		pmatch = keys(trie)[1]			#完全マッチでない場合
 	catch
 		match_mwe = ""
 	end
 	if pmatch != ""
-		match_mwe = ""		
+		match_mwe = ""
 	end
-	#yomi_sentenceからマッチ要素を削除
-	deleteat!(yomi_sentence, findin(yomi_sentence,match_yomi))	
 #	@show yomi_sentence
-	return match_mwe,yomi_sentence
+#	@show match_mwe
+	return match_mwe,yomi_sentence,match_yomi
 end
 
 ################################################
@@ -103,6 +103,7 @@ for xfile in child
 		origin_sentence = []
 		yomi_sentence = []
 		match_array = []
+		match_yomi = []
 		yomi = ""
 		######################################
 		#		XMLパーズ
@@ -122,15 +123,19 @@ for xfile in child
 		######################################
 		#		マッチング
 		######################################
-		match_mwe,yomi_sentence = search_trie(trie,yomi_sentence)
-		if match_mwe != ""				#なんらかのMWEにマッチした場合
+		yomi_sentence = Any["これ","いじょう","","ああ","いえば","こう","いう","のは","やめて"]
+		match_mwe,yomi_sentence,match_yomi = search_trie(trie,yomi_sentence)
+		if match_mwe != ""
 			push!(match_array,match_mwe)
-			@show match_array
-			while match_mwe != ""		#他のMWEがマッチする可能性も考慮
-				match_mwe,yomi_sentence = search_trie(trie,yomi_sentence)
-				if match_mwe != ""
-					push!(match_array,match_mwe)
-				end
+		end
+#		@show match_yomi
+		#他のMWEがマッチする可能性も考慮
+		while length(match_yomi) != 0		#部分マッチor完全マッチした場合
+			deleteat!(yomi_sentence, findin(yomi_sentence,match_yomi))	#yomi_sentenceからマッチ要素を削除
+#				@show yomi_sentence
+			match_mwe,yomi_sentence,match_yomi = search_trie(trie,yomi_sentence)
+			if match_mwe != ""
+				push!(match_array,match_mwe)
 			end
 		end
 		if length(match_array) != 0
@@ -141,6 +146,26 @@ for xfile in child
 		######################################
 	end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
