@@ -78,8 +78,10 @@ end
 ################################################
 #	main
 ################################################
-trie,lex_cnt = loadMWE()
 sen_cnt = 0		#文数カウント
+lex_cnt = 0		#エントリ数カウント
+matched_mwe_count = Dict{UTF8String,Int64}()			#マッチしたMWEをカウントする(k:MWE,v:cnt)
+trie,lex_cnt = loadMWE()
 #@show trie
 #@show subtrie(trie, "")	#trieが返ってくる
 
@@ -123,7 +125,7 @@ for xfile in child
 		######################################
 		#		マッチング
 		######################################
-		yomi_sentence = Any["これ","いじょう","","ああ","いえば","こう","いう","のは","やめて"]
+#		yomi_sentence = Any["これ","いじょう","","ああ","いえば","こう","いう","のは","やめて"]
 		match_mwe,yomi_sentence,match_yomi = search_trie(trie,yomi_sentence)
 		if match_mwe != ""
 			push!(match_array,match_mwe)
@@ -139,8 +141,15 @@ for xfile in child
 			end
 		end
 		if length(match_array) != 0
-			@show origin_sentence
-			@show yomi_sentence
+			for matched in match_array
+				value = get(matched_mwe_count,matched,0)
+				if value == 0			#キーが存在しなかった場合
+					matched_mwe_count[matched] = 1
+				else
+					matched_mwe_count[matched] += 1				
+				end
+#			@show origin_sentence
+#			@show yomi_sentence
 			@show match_array
 		end
 		######################################
