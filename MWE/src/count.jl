@@ -1,10 +1,10 @@
 #coding:utf-8
 
 using ExcelReaders
-using PyCall
 using LibExpat
 using DataFrames
 using DataStructures
+using PyCall
 @pyimport jcconv
 
 #using LightXML
@@ -20,6 +20,7 @@ Daiki Kubo
 2.あれば、マッチング(トライ木の探索)の際に、マッチした語のインデックスを取得
 3.マッチしたMWEの内部の語の配列を取得(array[2(マッチ始め):4(マッチ終わり)])
 4.内部修飾の品詞をマッチング
+
 """
 
 #const BCCWJ_PATH="../data/core_SUW.txt"		←このtsvファイルは使わない
@@ -150,7 +151,7 @@ for xfile in child
 		end
 		if length(match_array) != 0
 			for matched in match_array
-				value = get(matched_mwe_count,matched,0)
+				value = get(matched_mwe_hash,matched,0)
 				if value == 0			#キーが存在しなかった場合
 					matched_mwe_hash[matched] = 1
 					mwe_cnt += 1
@@ -168,24 +169,14 @@ for xfile in child
 	end
 end
 
-ratio = mwe_cnt/sen_cnt
-println("MWE(idiom)出現数/BCCWJ総文数 = "*mwe_cnt*"/"*sen_cnt"="ratio)
 @show matched_mwe_hash
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+########################################
+#	統計量計算
+########################################
+ratio_sen = mwe_cnt/sen_cnt
+ratio_lex = mwe_cnt/lex_cnt
+println("MWE(idiom)出現数/BCCWJ総文数 = "*mwe_cnt*"/"*sen_cnt*"="*ratio_sen)
+println("MWE(idiom)出現数/MWE(idiom)総数 = "*mwe_cnt*"/"*lex_cnt*"="*ratio_lex)
 
 
 
