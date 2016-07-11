@@ -192,8 +192,8 @@ end
 ########################################
 ratio_sen = mwe_cnt/sen_cnt
 ratio_lex = mwe_cnt/lex_cnt
-println("MWE(idiom)出現数/BCCWJ総文数 = "*mwe_cnt*"/"*sen_cnt*"="*ratio_sen)
-println("MWE(idiom)出現数/MWE(idiom)総数 = "*mwe_cnt*"/"*lex_cnt*"="*ratio_lex)
+println("MWE(idiom)出現数/BCCWJ総文数 = "*mwe_cnt*"/"*sen_cnt*"="*string(ratio_sen))
+println("MWE(idiom)出現数/MWE(idiom)総数 = "*mwe_cnt*"/"*lex_cnt*"="*string(ratio_lex))
 
 
 
