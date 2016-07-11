@@ -96,7 +96,6 @@ for xfile in child
 	sentence_nodes = LibExpat.find(root_node,"/mergedSample//sentence")
 	for sentence_node in sentence_nodes
 		sen_cnt += 1
-		@show sen_cnt
 #		println("--------------------------")
 		######################################
 		#		初期化
@@ -134,19 +133,14 @@ for xfile in child
 				end
 			end
 		end
-#		@show origin_sentence
-#		@show yomi_sentence
-#		@show match_array
+		if length(match_array) != 0
+			@show origin_sentence
+			@show yomi_sentence
+			@show match_array
+		end
 		######################################
 	end
 end
-
-
-
-
-
-
-
 
 
 
