@@ -15,29 +15,11 @@ Daiki Kubo
 2016/7/8
 ・To do
 ⇛たまにタグが抽出されてるものがあるから、正規表現で消す(見つけたの：<enclosedCharacter description>,<ruby rubytext>?)
-	⇛ただし解析には支障はないはず（kanaとformBaseは指定して取得してるから）
-⇛内部修飾句に対する制約：col. Eを使う(MWEの外は制約なくてもよさげ？文法規則的に無くても問題なさそう)
-※内部修飾しなくてもOKということに注意
-・アルゴリズム案：
-1.まずは、トライ木を探索する(今のアルゴリズムで)
-2.マッチング(トライ木の探索)の際に、マッチした語のインデックスを取得
-3.マッチしたMWEの内部の語の配列を取得(i.e. array[2(マッチ始め):4(マッチ終わり)])
-if マッチしたMWE(array[2:4])==goldのMWEとなる
-	MWEである
-else(gold≠match)
-	4.マッチしたMWEのcol.(B/E)?を参照
-	if 内部修飾できない
-		MWEでない
-	else(内部修飾可能)
-		5.内部修飾句の配列要素の品詞をマッチング(品詞はハッシュで保持？(k:word,v:pos))
-		if 品詞が全てマッチ
-			MWEである
-		else
-			MWEでない
-		end
-	end
-end
-
+⇛品詞の制約入れる必要あり
+match_part = きりがいちばんけんこうにもよいんでしょうけどそういかない
+reg_hash[match_mwe] = r.*きりが.*ない
+ismatch(reg_hash[match_mwe],match_part) = true
+↑これがマッチしてしまう
 """
 
 #const BCCWJ_PATH="../data/core_SUW.txt"		←このtsvファイルは使わない
@@ -48,9 +30,10 @@ const JDMWE_PATH="../data/JDMWE_idiom v1.3 20121215.xlsx"
 #	JDMWE読込
 ################################################
 function loadMWE()
-	lex_cnt = 0				#MWEエントリ数カウント
+#	lex_cnt = 0				#MWEエントリ数カウント
 	trie = Trie{Int}()			#トライ木宣言
 	cnt = 1
+	reg_hash = Dict{UTF8String,Regex}()	#k:mwe,v:mwe_reg
 	jdmwe_df = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D, :E, :F, :G, :H])
 #	println(jdmwe_df[[:B,:E]])
 
@@ -58,34 +41,38 @@ function loadMWE()
 	lex_cnt = length(jdmwe_df[:B])		#4449
 	#.:内部修飾, _:異字種で表記可能
 	for mwe in jdmwe_df[:B]
-	#	println(split(mwe,"-"))
-		mwe = replace(mwe,r"(\.|_|-)","")		#_と先頭の.を消去
-#		mwe = replace(mwe,".","-.-")		#先頭以外の.を-.-に置換	
-#		mwe = split(mwe,"-")
+		mwe = replace(mwe,r"(_|-)","")
+		mwe_reg = Regex(replace(mwe,r"(\.)",".*"))
+		mwe = replace(mwe,r"(\.)","")		#_と先頭の.を消去
+		reg_hash[mwe] = mwe_reg
 		trie[mwe] = cnt
 		cnt += 1
 	end
-	return trie,lex_cnt
+	return trie,reg_hash
 end
 
 ################################################
 #	トライ木探索
 ################################################
-function search_trie(trie,yomi_sentence)
+function search_trie(trie,yomi_sentence,reg_hash)
 	match_mwe = ""
 	pmatch = ""				#マッチした部分下のsubtrie文字列
 	match_yomi = []
-#	@show yomi_sentence
+	index = 1					#マッチ部取得用のインデックス
+	index_arr = []		#インデックス保持用
 	for yomi in yomi_sentence
 		if yomi != ""
 			buff = keys_with_prefix(trie, yomi)
 			if length(buff) == 1		#マッチ
+				push!(index_arr,index)
 				trie = subtrie(trie, yomi)
 				match_mwe *= yomi
 				push!(match_yomi,yomi)
 			end
 		end
+		index += 1
 	end
+#	@show index_arr
 	try
 		pmatch = keys(trie)[1]			#完全マッチでない場合
 	catch
@@ -93,9 +80,13 @@ function search_trie(trie,yomi_sentence)
 	end
 	if pmatch != ""
 		match_mwe = ""
+	else
+		#内部修飾の制約を含めたマッチング
+		match_part = join(yomi_sentence[index_arr[1]:index_arr[end]])
+		@show match_part 
+		@show reg_hash[match_mwe]
+		@show ismatch(reg_hash[match_mwe],match_part)	
 	end
-#	@show yomi_sentence
-#	@show match_mwe
 	return match_mwe,yomi_sentence,match_yomi
 end
 
@@ -107,8 +98,9 @@ lex_cnt = 0		#エントリ数カウント(idiom:4449)
 mwe_cnt = 0		#マッチしたMWEをカウント
 
 matched_mwe_hash = Dict{UTF8String,Int64}()		#マッチしたMWEをカウントする(k:MWE,v:cnt)
-trie,lex_cnt = loadMWE()
-#@show trie
+trie,reg_hash = loadMWE()
+lex_cnt = length(reg_hash)
+#@show reg_hash
 #@show subtrie(trie, "")	#trieが返ってくる
 
 #BCCWJ_CORE_M-XMLファイルオープン
@@ -152,7 +144,7 @@ for xfile in child
 		#		マッチング
 		######################################
 #		yomi_sentence = Any["これ","いじょう","","ああ","いえば","こう","いう","のは","やめて"]
-		match_mwe,yomi_sentence,match_yomi = search_trie(trie,yomi_sentence)
+		match_mwe,yomi_sentence,match_yomi = search_trie(trie,yomi_sentence,reg_hash)
 		if match_mwe != ""
 			push!(match_array,match_mwe)
 		end
@@ -161,7 +153,7 @@ for xfile in child
 		while length(match_yomi) != 0		#部分マッチor完全マッチした場合
 			deleteat!(yomi_sentence, findin(yomi_sentence,match_yomi))	#yomi_sentenceからマッチ要素を削除
 #				@show yomi_sentence
-			match_mwe,yomi_sentence,match_yomi = search_trie(trie,yomi_sentence)
+			match_mwe,yomi_sentence,match_yomi = search_trie(trie,yomi_sentence,reg_hash)
 			if match_mwe != ""
 				push!(match_array,match_mwe)
 			end
@@ -177,9 +169,9 @@ for xfile in child
 					mwe_cnt += 1
 				end
 			end
-			@show origin_sentence
+#			@show origin_sentence
 #			@show yomi_sentence
-			@show match_array
+#			@show match_array
 #			@show matched_mwe_hash
 		end
 		######################################
