@@ -51,56 +51,57 @@ def main():
     # Classifier reports softmax cross entropy loss and accuracy at every
     # iteration, which will be used by the PrintReport extension below.
     model = L.Classifier(MLP(784, args.unit, 10))
-    if args.gpu >= 0:
-        chainer.cuda.get_device(args.gpu).use()  # Make a specified GPU current
-        model.to_gpu()  # Copy the model to the GPU
+    print model
+#    if args.gpu >= 0:
+#        chainer.cuda.get_device(args.gpu).use()  # Make a specified GPU current
+#        model.to_gpu()  # Copy the model to the GPU
 
     # Setup an optimizer
-    optimizer = chainer.optimizers.Adam()
-    optimizer.setup(model)
+#    optimizer = chainer.optimizers.Adam()
+#    optimizer.setup(model)
 
     # Load the MNIST dataset
-    train, test = chainer.datasets.get_mnist()
+#    train, test = chainer.datasets.get_mnist()
 
-    train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
-    test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
+#    train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
+#    test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
                                                  repeat=False, shuffle=False)
 
     # Set up a trainer
-    updater = training.StandardUpdater(train_iter, optimizer, device=args.gpu)
-    trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
+#    updater = training.StandardUpdater(train_iter, optimizer, device=args.gpu)
+#    trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
 
     # Evaluate the model with the test dataset for each epoch
-    trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
+#    trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
 
     # Dump a computational graph from 'loss' variable at the first iteration
     # The "main" refers to the target link of the "main" optimizer.
-    trainer.extend(extensions.dump_graph('main/loss'))
+#    trainer.extend(extensions.dump_graph('main/loss'))
 
     # Take a snapshot at each epoch
-    trainer.extend(extensions.snapshot())
+#    trainer.extend(extensions.snapshot())
 
     # Write a log of evaluation statistics for each epoch
-    trainer.extend(extensions.LogReport())
+#    trainer.extend(extensions.LogReport())
 
     # Print selected entries of the log to stdout
     # Here "main" refers to the target link of the "main" optimizer again, and
     # "validation" refers to the default name of the Evaluator extension.
     # Entries other than 'epoch' are reported by the Classifier link, called by
     # either the updater or the evaluator.
-    trainer.extend(extensions.PrintReport(
-        ['epoch', 'main/loss', 'validation/main/loss',
-         'main/accuracy', 'validation/main/accuracy']))
+#    trainer.extend(extensions.PrintReport(
+#        ['epoch', 'main/loss', 'validation/main/loss',
+#         'main/accuracy', 'validation/main/accuracy']))
 
     # Print a progress bar to stdout
-    trainer.extend(extensions.ProgressBar())
+#    trainer.extend(extensions.ProgressBar())
 
-    if args.resume:
+#    if args.resume:
         # Resume from a snapshot
-        chainer.serializers.load_npz(args.resume, trainer)
+#        chainer.serializers.load_npz(args.resume, trainer)
 
     # Run the training
-    trainer.run()
+#    trainer.run()
 
 if __name__ == '__main__':
     main()
