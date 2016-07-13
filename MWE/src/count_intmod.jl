@@ -36,7 +36,7 @@ function loadMWE()
 	cnt = 1
 	reg_hash = Dict{UTF8String,Regex}()	#k:mwe,v:mwe_reg
 	jdmwe_df = readxlsheet(DataFrame, JDMWE_PATH, "Sheet1", colnames=[:A, :B, :C, :D, :E, :F, :G, :H])
-	@show (jdmwe_df[[301:302,1742:1743,1841:1842,2044:2045,2199:2200,2586:2587,2668:2669,2956:2957,3686:3687,3831:3832,3836:3837],[:A,:B,:C,:D,:E,:F,:G,:H]])
+#	@show (jdmwe_df[[301:302,1742:1743,1841:1842,2044:2045,2199:2200,2586:2587,2668:2669,2956:2957,3686:3687,3831:3832,3836:3837],[:A,:B,:C,:D,:E,:F,:G,:H]])
 #	@show (jdmwe_df[[:B,:E]])
 
 	#まずは品詞の制約なし
@@ -46,10 +46,10 @@ function loadMWE()
 		mwe = replace(mwe,r"(_|-)","")
 		mwe_reg = Regex(replace(mwe,r"(\.)",".*"))
 		mwe = replace(mwe,r"(\.)","")		#_と先頭の.を消去
-		value = get(reg_hash,mwe,0)
-		if value != 0
-			@show mwe
-		end
+#		value = get(reg_hash,mwe,0)			#overlab確認
+#		if value != 0
+#			@show mwe
+#		end
 		reg_hash[mwe] = mwe_reg
 		trie[mwe] = cnt
 		cnt += 1
@@ -78,7 +78,6 @@ function search_trie(trie,yomi_sentence,reg_hash)
 		end
 		index += 1
 	end
-#	@show index_arr
 	try
 		pmatch = keys(trie)[1]			#完全マッチでない場合
 	catch
@@ -104,12 +103,14 @@ lex_cnt = 0		#エントリ数カウント(idiom:4449)
 mwe_cnt = 0		#マッチしたMWEをカウント
 
 matched_mwe_hash = Dict{UTF8String,Int64}()		#マッチしたMWEをカウントする(k:MWE,v:cnt)
-trie,reg_hash,lex_cnt = loadMWE()
-#lex_cnt = length(reg_hash)
-#@show reg_hash
-#@show subtrie(trie, "")	#trieが返ってくる
+trie,reg_hash,lex_cnt,jdmwe_df_b = loadMWE()
 
-#BCCWJ_CORE_M-XMLファイルオープン
+
+#lex_cnt = length(reg_hash)
+##@show reg_hash
+##@show subtrie(trie, "")	#trieが返ってくる
+
+##BCCWJ_CORE_M-XMLファイルオープン
 #child = readdir(BCCWJ_ROOT)
 #for xfile in child
 ##	println("--------------------------")
@@ -175,9 +176,9 @@ trie,reg_hash,lex_cnt = loadMWE()
 #					mwe_cnt += 1
 #				end
 #			end
-#			@show origin_sentence
-#			@show yomi_sentence
-#			@show match_array
+##			@show origin_sentence
+##			@show yomi_sentence
+##			@show match_array
 #		end
 #		######################################
 #	end
@@ -193,7 +194,18 @@ trie,reg_hash,lex_cnt = loadMWE()
 #println("MWE(idiom)出現数/BCCWJ総文数 = "*string(mwe_cnt)*"/"*string(sen_cnt)*"="*string(ratio_sen))
 #println("MWE(idiom)出現数/MWE(idiom)総数 = "*string(mwe_entr)*"/"*string(lex_cnt)*"="*string(ratio_lex))
 
+##一度も出現していないMWE確認
+#for mwe in jdmwe_df_b
+#	if in(mwe,keys(matched_mwe_hash)) != false
+#		@show mwe
+#	end
+#end
 
-
+#一度も出現していないMWE確認
+#for mwe in jdmwe_df_b
+#	if in(mwe,keys(matched_mwe_hash)) == false
+#		@show mwe
+#	end
+#end
 
 
