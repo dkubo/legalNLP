@@ -41,13 +41,12 @@ def r(task_id, filename, vocab):		#filename:ファイルへの相対パス
             batch_list.append((item_fact, item_qa))
             item_fact = []
             item_qa = []
-        print lsplit
         if len(lsplit) == 1:		#質問文ではない普通の文のとき
             sentence_idx = build_vocab(vocab, sentence_split)
             item_fact.append((task_id, s_id, sentence_idx, sentence_str))
         else:			#質問文のとき
             # answer = lsplit[1].lower().split(',')
-#            answer = [lsplit[1].lower()]
+            answer = [lsplit[1].lower()]
 #            print "answer:"+answer[0]
             answer_hint = map(int, lsplit[2].split())
 #            print answer_hint
@@ -88,8 +87,9 @@ def build_dataset():
         # print train_batch_list
         # train_dataset.append(train_batch_list)
         # test_dataset.append(test_batch_list)
-    print len(set([i for i, _ in vocab.items()]))
-    print len(set([i.lower() for i, _ in vocab.items()]))
+    #語彙の数確認
+#    print len(set([i for i, _ in vocab.items()]))		#_:残りのやつらが全部格納される,set(array):重複のない行列
+#    print len(set([i.lower() for i, _ in vocab.items()]))		#items:キーと値のリストを取得
     return train_dataset, test_dataset, vocab
 
 

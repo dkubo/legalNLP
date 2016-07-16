@@ -43,6 +43,7 @@ def parse_data(vocab, lines):
     last_id = 0
     for line in lines:
         line = line.strip()
+        print line
         pos = line.find(' ')
         sid = int(line[:pos])
         if sid == 1:

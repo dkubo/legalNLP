@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+gpu:
+python train.py --gpu 0
+"""
 
 import numpy as np
 import chainer
@@ -14,7 +18,7 @@ def fill_batch(batch, fill_token=-1):
 
 
 if __name__ == '__main__':
-    train_dataset, test_dataset, vocab = parse.build_dataset()
+    train_dataset, test_dataset, vocab = parse.build_dataset()	#train,test:array,vocab:dict
     n_vocab = len(vocab)
     memNN = net.MemoryNet(n_vocab=n_vocab, word_emb_size=50, nhop=3)
     opt = chainer.optimizers.Adam(alpha=0.01, beta1=0.9, beta2=0.999, eps=1e-6)

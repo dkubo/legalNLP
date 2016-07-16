@@ -205,7 +205,8 @@ def convert_data(train_data, gpu):
 if __name__ == '__main__':
     import data
     vocab = collections.defaultdict(lambda: len(vocab))
-    data_dir = '/home/unno/qa/tasks_1-20_v1-2'
+#    data_dir = '/home/unno/qa/tasks_1-20_v1-2'
+    data_dir = '../../data/tasks_1-20_v1-2'
     data_type = 'en'
     for data_id in range(1, 21):
 
@@ -243,6 +244,6 @@ if __name__ == '__main__':
             proc(train_data, batch_size, train=True)
             acc = proc(test_data, batch_size, train=False)
 
-        acc = acc * 100
+        acc = acc * 100			# convert from ratio to %
         err = 100 - acc
         print('%d: acc: %.2f\terr: %.2f' % (data_id, acc, err))
