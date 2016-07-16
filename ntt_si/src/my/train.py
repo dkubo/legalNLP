@@ -2,8 +2,16 @@
 
 import collections
 import glob
+import copy
 import argparse
+import numpy as np
 
+from chainer import cuda
+
+"""
+python train.py --gpu 0
+
+"""
 
 class Sentence(object):
 
@@ -39,7 +47,6 @@ def parse_line(vocab, line):
 		return Sentence(s_ids)
 
 
-# 必要なデータ: 語彙数,語彙のid,
 def parse_data(path, vocab):
 	data = []
 	all_data = []
@@ -59,15 +66,49 @@ def parse_data(path, vocab):
 
 		return all_data
 
+def convert_data(data, gpu):
+	d = []
+	# 文の最長単語数を求める
+	sentence_maxlen = max(max(len(s.sentence) for s in story) for story in data)
+	for story in data:
+		mem = np.zeros((50, sentence_maxlen), dtype=np.int32)		# mem: 50×sentence_maxlenのint32のゼロ行列
+		mem_length = np.zeros(50, dtype=np.int32)								# mem: 50次元のベクトル
+		i = 0
+		for sent in story:
+			# isinstance(object, class): objectがclassのインスタンスかどうか
+			if isinstance(sent, Sentence):
+				if i == 50:
+					mem[0:i-1, :] = mem[1:i, :]
+					mem_length[0:i-1] = mem_length[1:i]
+					i -= 1
+				mem[i, 0:len(sent.sentence)] = sent.sentence
+				mem_length[i] = len(sent.sentence)
+				i += 1
+			elif isinstance(sent, Query):
+				query = np.zeros(sentence_maxlen, dtype=np.int32)
+				query[0:len(sent.sentence)] = sent.sentence
+				if gpu >= 0:
+					# gpu
+					d.append((cuda.to_gpu(mem),cuda.to_gpu(query),sent.answer))
+				else:
+					d.append((copy.deepcopy(mem),(query),sent.answer))
+
+	return d
+
+	
+	
+
 def get_arg():
 	parser = argparse.ArgumentParser(description='converter')
-	parser.add_argument('--gpu', type=int, default=-1)
+	parser.add_argument('-gpu','--gpu', type=int, default=-1)
 	args = parser.parse_args()
-	print args
+	return args
 
 if __name__ == '__main__':
-	get_arg()
+	gpu = get_arg().gpu
+	print 'gpu:',gpu
 	root_path = "../../data/tasks_1-20_v1-2/en"
+	# 未知語(:k)が引数として与えられた場合、id(:v)を付与する
 	vocab = collections.defaultdict(lambda: len(vocab))
 #	for data_id in range(1,21):
 	data_id = 1
@@ -76,18 +117,10 @@ if __name__ == '__main__':
 	train_data = parse_data(fpath, vocab)
 	fpath = glob.glob('%s/qa%d_*test.txt' % (root_path, data_id))[0]
 	test_data = parse_data(fpath, vocab)
-	print('Training data: %d' % len(train_data))		# 文id=1で区切ったデータ数
-
-	#未知語(:k)が引数として与えられた場合、id(:v)を付与する
-#	print vocab["I"]
-#	print vocab["can"]
-#	print vocab["I"]
-
-#	words = ['I','can','fly','!']
-#	wid = [vocab[w] for w in words]
-#	print wid
-
-
+	print('Training data: %d' % len(train_data))		# 文id=1で区切ったとき(story)のデータ数
+	print train_data
+	train_data = convert_data(train_data, gpu)
+	print train_data
 
 
 
