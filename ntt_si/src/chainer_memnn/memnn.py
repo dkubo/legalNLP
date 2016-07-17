@@ -181,7 +181,7 @@ def convert_data(train_data, gpu):
         for sent in story:
             if isinstance(sent, data.Sentence):
                 if i == 50:
-                    mem[0:i-1, :] = mem[1:i, :]
+                    mem[0:i-1, :] = mem[1:i, :]			
                     mem_length[0:i-1] = mem_length[1:i]
                     i -= 1
                 mem[i, 0:len(sent.sentence)] = sent.sentence

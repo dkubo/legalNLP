@@ -5,98 +5,81 @@ import glob
 import copy
 import argparse
 import numpy as np
+import data
+import cupy
 
-from chainer import cuda
+from chainer import cuda, Variable
+from chainer import functions as F
+from chainer import links as L
+from chainer import optimizers
+
 
 """
 python train.py --gpu 0
 
 """
-
-class Sentence(object):
-
-	def __init__(self, sentence):
-		self.sentence = sentence
-
-class Query(object):		# class: 何も継承しない場合は,objectを指定する
-
-    def __init__(self, sentence, answer, fact):
-        self.sentence = sentence
-        self.answer = answer
-        self.fact = fact
-
-def normalize(sentence):
-	return sentence.lower().replace('.', '').replace('?', '')
-
-def get_wid(vocab, words):
-	return [vocab[word] for word in words]
-
-def parse_line(vocab, line):
-	if '\t' in line:
-		#question line
-		q, ans, f_sids = line.split('\t')
-		ans_id = get_wid(vocab, [ans])[0]	# ans_id: answerの語彙のid
-		q_words = normalize(q).split()
-		q_ids = get_wid(vocab, q_words)
-		f_sids = map(int, f_sids.split(' '))		# map(a,b): aをbの全要素に適用する
-		return Query(q_ids, ans_id, f_sids)
-	else:
-		#sentence line
-		s_words = normalize(line).split()
-		s_ids = get_wid(vocab, s_words)
-		return Sentence(s_ids)
+class Memory(object):
+	
 
 
-def parse_data(path, vocab):
-	data = []
-	all_data = []
-	with open(fpath) as f:
-		for line in f:
-			# pos: 最初の空白のインデックス
-			pos = line.find(' ')	# find(str): strとマッチしたインデックスを返す
-			sid = int(line[:pos])	# sid: 文id
-			line = line[pos:]			# sidを除去
-			if sid == 1 and len(data) > 0:
-				all_data.append(data)
-				data = []				
-			data.append(parse_line(vocab, line))
 
-		if len(data) > 0:
-			all_data.append(data)
+class MemNN(chainer.Chain):
+	def __init__(self, n_units, n_vocab, max_memory=15):
+		super(MemNN, self).__init__(
+			E1=L.EmbedID(n_vocab, n_units),  # encoder for inputs
+			E2=L.EmbedID(n_vocab, n_units),  # encoder for inputs
+			E3=L.EmbedID(n_vocab, n_units),  # encoder for inputs
+			E4=L.EmbedID(n_vocab, n_units),  # encoder for inputs
+			T1=L.EmbedID(max_memory, n_units),  # encoder for inputs
+			T2=L.EmbedID(max_memory, n_units),  # encoder for inputs
+			T3=L.EmbedID(max_memory, n_units),  # encoder for inputs
+			T4=L.EmbedID(max_memory, n_units),  # encoder for inputs
+		)
+		# Adjacent (A_k+1=C_k)
+		self.M1 = Memory(self.E1, self.E2, self.T1, self.T2)	# 1層目
+		self.M2 = Memory(self.E2, self.E3, self.T2, self.T3)	# 2層目
+		self.M3 = Memory(self.E3, self.E4, self.T3, self.T4)	# 3層目
+		# Adjacent (B = A_1)
+		self.B = self.E1
+		# 重みのランダム初期化 (平均0,標準偏差0.1の正規分布)
+		init_params(self.E1, self.E2, self.E3, self.E4,
+				    self.T1, self.T2, self.T3, self.T4)
 
-		return all_data
+def init_params(*embs):	# *: 引数をリストとして受け取る
+    for emb in embs:
+	    emb.W.data[:] = np.random.normal(0, 0.1, emb.W.data.shape)
 
-def convert_data(data, gpu):
-	d = []
+
+def convert_data(before_data, gpu):
+	d = []	# story: 15 → [[3通常文(mem), 1質問文, 1答え],[6通常文(mem), 1質問文, 1答え],...]
 	# 文の最長単語数を求める
-	sentence_maxlen = max(max(len(s.sentence) for s in story) for story in data)
-	for story in data:
+	sentence_maxlen = max(max(len(s.sentence) for s in story) for story in before_data)
+	for story in before_data:
 		mem = np.zeros((50, sentence_maxlen), dtype=np.int32)		# mem: 50×sentence_maxlenのint32のゼロ行列
-		mem_length = np.zeros(50, dtype=np.int32)								# mem: 50次元のベクトル
+		mem_length = np.zeros(50, dtype=np.int32)		# mem_length: 50次元のベクトル
 		i = 0
 		for sent in story:
-			# isinstance(object, class): objectがclassのインスタンスかどうか
-			if isinstance(sent, Sentence):
-				if i == 50:
-					mem[0:i-1, :] = mem[1:i, :]
+#			# isinstance(object, class): objectがclassのインスタンスかどうか
+			if isinstance(sent, data.Sentence):
+				if i == 50:		# The capacity of memory is restricted to the most 50 sentence(1ストーリーあたり50文まで記憶する)
+					mem[0:i-1, :] = mem[1:i, :]		# 一番古い情報をシフトする(1〜49→0〜48にシフト)
+					# print mem[0,0:3]	# 0行目の0〜2列を取得
 					mem_length[0:i-1] = mem_length[1:i]
 					i -= 1
 				mem[i, 0:len(sent.sentence)] = sent.sentence
 				mem_length[i] = len(sent.sentence)
 				i += 1
-			elif isinstance(sent, Query):
-				query = np.zeros(sentence_maxlen, dtype=np.int32)
+			elif isinstance(sent, data.Query):
+				# question sentence
+				query = np.zeros(sentence_maxlen, dtype=np.int32)	# 質問文ベクトル
 				query[0:len(sent.sentence)] = sent.sentence
-				if gpu >= 0:
-					# gpu
+				if gpu >= 0:	# gpu
 					d.append((cuda.to_gpu(mem),cuda.to_gpu(query),sent.answer))
 				else:
 					d.append((copy.deepcopy(mem),(query),sent.answer))
 
 	return d
 
-	
-	
 
 def get_arg():
 	parser = argparse.ArgumentParser(description='converter')
@@ -114,13 +97,13 @@ if __name__ == '__main__':
 	data_id = 1
 	# glob.glob: マッチしたパスをリストで返す
 	fpath = glob.glob('%s/qa%d_*train.txt' % (root_path, data_id))[0]
-	train_data = parse_data(fpath, vocab)
+	train_data = data.parse_data(fpath, vocab)
 	fpath = glob.glob('%s/qa%d_*test.txt' % (root_path, data_id))[0]
-	test_data = parse_data(fpath, vocab)
+	test_data = data.parse_data(fpath, vocab)
 	print('Training data: %d' % len(train_data))		# 文id=1で区切ったとき(story)のデータ数
-	print train_data
 	train_data = convert_data(train_data, gpu)
-	print train_data
+	test_data = convert_data(test_data, gpu)
+
 
 
 
