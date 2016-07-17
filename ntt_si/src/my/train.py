@@ -8,10 +8,10 @@ import numpy as np
 import data
 import cupy
 
-from chainer import cuda, Variable
+import chainer
 from chainer import functions as F
 from chainer import links as L
-from chainer import optimizers
+from chainer import optimizers, training, cuda
 
 
 """
@@ -19,12 +19,16 @@ python train.py --gpu 0
 
 """
 class Memory(object):
-	
+	def __init__(self,A, C, TA, TC):
+		self.A = A
+		self.A = C
+		self.TA = TA
+		self.TC = TC
 
 
 
 class MemNN(chainer.Chain):
-	def __init__(self, n_units, n_vocab, max_memory=15):
+	def __init__(self, n_units, n_vocab, max_memory=50):
 		super(MemNN, self).__init__(
 			E1=L.EmbedID(n_vocab, n_units),  # encoder for inputs
 			E2=L.EmbedID(n_vocab, n_units),  # encoder for inputs
@@ -41,9 +45,12 @@ class MemNN(chainer.Chain):
 		self.M3 = Memory(self.E3, self.E4, self.T3, self.T4)	# 3層目
 		# Adjacent (B = A_1)
 		self.B = self.E1
+		print "---------------------------------------"
+#		print self.E1.W.data.shape	# (19,20)
+
 		# 重みのランダム初期化 (平均0,標準偏差0.1の正規分布)
-		init_params(self.E1, self.E2, self.E3, self.E4,
-				    self.T1, self.T2, self.T3, self.T4)
+#		init_params(self.E1, self.E2, self.E3, self.E4,
+#				    self.T1, self.T2, self.T3, self.T4)
 
 def init_params(*embs):	# *: 引数をリストとして受け取る
     for emb in embs:
@@ -88,8 +95,8 @@ def get_arg():
 	return args
 
 if __name__ == '__main__':
-	gpu = get_arg().gpu
-	print 'gpu:',gpu
+	args = get_arg()
+	print 'gpu:',args.gpu
 	root_path = "../../data/tasks_1-20_v1-2/en"
 	# 未知語(:k)が引数として与えられた場合、id(:v)を付与する
 	vocab = collections.defaultdict(lambda: len(vocab))
@@ -101,10 +108,28 @@ if __name__ == '__main__':
 	fpath = glob.glob('%s/qa%d_*test.txt' % (root_path, data_id))[0]
 	test_data = data.parse_data(fpath, vocab)
 	print('Training data: %d' % len(train_data))		# 文id=1で区切ったとき(story)のデータ数
-	train_data = convert_data(train_data, gpu)
-	test_data = convert_data(test_data, gpu)
+	train_data = convert_data(train_data, args.gpu)
+	test_data = convert_data(test_data, args.gpu)
 
+	model = MemNN(20, len(vocab), 50)	# (n_units:word_embeddingの次元数(=20), n_vocab:語彙数, max_mem=50)
+	if args.gpu >= 0:
+		model.to_gpu()
+		xp = cupy
+	else:
+		xp = np
 
+	# Setup an optimizer	
+	optimizer = optimizers.Adam()
+	optimizer.setup(model)
+
+	batch_size = 100
+	train_iter = chainer.iterators.SerialIterator(train_data, batch_size)
+	test_iter = chainer.iterators.SerialIterator(test_data, batch_size)
+	print train_iter
+    # Set up a trainer
+#    updater = training.StandardUpdater(train_iter, optimizer, device=args.gpu)
+#    trainer = training.Trainer(updater, (args.epoch, 'epoch'))
+#    trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
 
 
 
