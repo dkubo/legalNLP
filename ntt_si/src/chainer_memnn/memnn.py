@@ -109,22 +109,8 @@ class MemNN(chainer.Chain):
         u = self.M3.query(u)
         #a = self.W(u)
         a = F.linear(u, self.E4.W)
+#        print "predict.data.shape,answer.data.shape:", a.data.shape,y.data.shape
         return F.softmax_cross_entropy(a, y), F.accuracy(a, y)
-
-
-def make_batch_sentence(lines):
-    batch_size = len(lines)
-    max_sent_len = max(len(line.sentence) for line in lines)
-    # Fill zeros
-    ws = numpy.zeros((batch_size, max_sent_len), dtype=numpy.int32)
-    for i, line in enumerate(lines):
-        ws[i, 0:len(line.sentence)] = line.sentence
-    if xp is cupy:
-        ws = chainer.cuda.to_gpu(ws)
-
-    lengths = xp.array([len(line.sentence) for line in lines], dtype=numpy.int32)
-
-    return ws, lengths
 
 
 def proc(proc_data, batch_size, train=True):

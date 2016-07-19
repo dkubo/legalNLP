@@ -60,21 +60,13 @@ if __name__ == '__main__':
                     x_input_query.append(question_idx)
                     y_answer.append(answer_idx[0])
 
-                # print x_input_fact
-                # print x_input_query
-                # print batch_dataset
                 x_input_query = fill_batch(x_input_query)
-                # x_input.append(x_input_fact)
-                # x_query.append(x_input_query)
-
 
             x_input = Variable(np.array(x_input_fact).astype(np.int32))
             x_query = Variable(np.array(x_input_query).astype(np.int32))
             y_answer = Variable(np.array(y_answer).astype(np.int32))
 
-            # print x_input.data
-            # print x_query.data
-            # print y_answer.data
+
             loss = memNN.encode(x_input, x_query, y_answer)
             # print loss
             sum_loss += loss.data
