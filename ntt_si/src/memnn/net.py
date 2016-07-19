@@ -82,7 +82,6 @@ class MemoryNet(chainer.Chain):
 #        print "o.data:", o.data
 #        print "(u+o).data.shape:", (u+o).data.shape
         predict = self.W(u + o)
-        print "predict, answer:",predict.data.shape, answer.data.shape
         loss = functions.softmax_cross_entropy(predict, answer)
         return loss
 

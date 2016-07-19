@@ -109,7 +109,6 @@ class MemNN(chainer.Chain):
         u = self.M3.query(u)
         #a = self.W(u)
         a = F.linear(u, self.E4.W)
-#        print "predict.data.shape,answer.data.shape:", a.data.shape,y.data.shape
         return F.softmax_cross_entropy(a, y), F.accuracy(a, y)
 
 
@@ -153,7 +152,7 @@ def proc(proc_data, batch_size, train=True):
             opt.update()
             model.fix_ignore_label()
 
-    #print('loss: %.4f\tacc: %.2f' % (float(total_loss), float(total_acc) / count * 100))
+    print('loss: %.4f\tacc: %.2f' % (float(total_loss), float(total_acc) / count * 100))
     return float(total_acc) / count
 
 

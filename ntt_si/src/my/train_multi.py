@@ -22,36 +22,30 @@ python train.py --gpu 0
 class MemNN(chainer.Chain):
 	def __init__(self, n_vocab, word_embed_size, max_memory=50):
 		super(MemNN, self).__init__(
-			A = L.EmbedID(n_vocab, word_embed_size, ignore_label=-1),  # encoder for inputs
-			B = L.EmbedID(n_vocab, word_embed_size, ignore_label=-1),  # encoder for query
-			C = L.EmbedID(n_vocab, word_embed_size, ignore_label=-1),  # encoder for outputs
-			W = L.Linear(word_embed_size, n_vocab),  # encoder for answer
+			A_1 = L.EmbedID(n_vocab, word_embed_size, ignore_label=-1),  # encoder for inputs
+			A_2 = L.EmbedID(n_vocab, word_embed_size, ignore_label=-1),  # encoder for inputs
+			A_3 = L.EmbedID(n_vocab, word_embed_size, ignore_label=-1),  # encoder for inputs
+			C_3 = L.EmbedID(n_vocab, word_embed_size, ignore_label=-1),  # encoder for inputs
+			W = L.Linear(word_embed_size, n_vocab), 										 # encoder for answer
 		)
-		# Adjacent (A_k+1=C_k)
-#		self.M1 = Memory(self.E1, self.E2, self.T1, self.T2)	# 1層目
-#		self.M2 = Memory(self.E2, self.E3, self.T2, self.T3)	# 2層目
-#		self.M3 = Memory(self.E3, self.E4, self.T3, self.T4)	# 3層目
-		# Adjacent (B = A_1)
-#		self.B = self.E1
-
 		# 重みのランダム初期化 (平均0,標準偏差0.1の正規分布)
-#		init_params(self.A, self.B, self.C, self.W)
+		init_params(self.A_1, self.A_2, self.A_3, self.C_3, self.W)
+		# Adjacent (A_k+1=C_k)
+		self.C_1 = self.A_2																							  # encoder for outputs
+		self.C_2 = self.A_3 																							 # encoder for outputs
+		# Adjacent (B = A_1)
+		self.B = self.A_1  																							# encoder for query
+
 	
 	def __call__(self, x_input, query, answer, train=True):
-		m = self.encode_input(x_input)		# memory for input
-		u = self.encode_query(query)			# memory for query
-		c = self.encode_output(x_input)		# memory for output
-#		print "m.data.shape", m.data.shape		# (50,20)
-#		print "u.data.shape", u.data.shape		# (1,20)
-		# mとuの内積
-		mu = F.matmul(m, u, transb=True)	# mを転置して内積をとる
-		# 文の重要度p(アテンション)
-		p = F.softmax(mu)
-#		print p.data.shape		# (50,1)
-#		print c.data.shape		# (50,20)
-		o = F.matmul(p, c, transa=True)		# cとpのweighted sum
-#		print o.data.shape		# (1,20)
-		predict = self.W(u+o)
+		# layer 1
+		b_2 = self.memory(x_input, query, layer=1)
+		# layer 2
+		b_3 = self.memory(x_input, b_2, layer=2)
+		# layer 3
+		b_4 = self.memory(x_input, b_2, layer=3)
+
+		predict = self.W(b_4)
 #		print "answer.shape,predict.shape:", answer.shape,predict.data.shape
 		if train:
 			return F.softmax_cross_entropy(predict, answer)
@@ -59,15 +53,41 @@ class MemNN(chainer.Chain):
 			return F.accuracy(predict, answer)
 
 	# エンコード = 埋め込みベクトルの和
-	def encode_input(self, x_input):
-		return F.sum(self.A(x_input), axis=1)
+	def encode_input(self, x_input, layer=1):
+		if layer == 1:
+			return F.sum(self.A_1(x_input), axis=1)
+		elif layer == 2:
+			return F.sum(self.A_2(x_input), axis=1)
+		elif layer == 3:
+			return F.sum(self.A_3(x_input), axis=1)
 
 	def encode_query(self, query):
 		return F.sum(self.B(query), axis=1)
 		
-	def encode_output(self, x_input):
-		return F.sum(self.C(x_input), axis=1)
+	def encode_output(self, x_input, layer=1):
+		if layer == 1:
+			return F.sum(self.C_1(x_input), axis=1)
+		elif layer == 2:
+			return F.sum(self.C_2(x_input), axis=1)
+		elif layer == 3:
+			return F.sum(self.C_3(x_input), axis=1)
 
+	def memory(self, x_input, query, layer):
+		m = self.encode_input(x_input,layer)		# memory for input
+		c = self.encode_output(x_input)		# memory for output
+		if layer == 1:
+			u = self.encode_query(query)			# memory for query
+		else:
+			u = query
+#		print "m.data.shape", m.data.shape		# (50,20)
+#		print "u.data.shape", u.data.shape		# (1,20)
+		mu = F.matmul(m, u, transb=True)	# mを転置して内積をとる
+		p = F.softmax(mu)									# 文の重要度p(アテンション)
+#		print p.data.shape		# (50,1)
+#		print c.data.shape		# (50,20)
+		o = F.matmul(p, c, transa=True)		# cとpのweighted sum
+#		print o.data.shape		# (1,20)
+		return (u+o)
 
 def init_params(*embs):	# *: 引数をリストとして受け取る
     for emb in embs:
@@ -121,6 +141,8 @@ def proc(iter_list,train=True):
 	for batch_data in iter_list:
 #		print len(batch_data)		# 100
 		accum_loss = None
+#		for b_cnt, batch in enumerate(batch_data):
+#		x_input, query, answer = batch
 		x_input, query, answer = batch_data[0]
 		# train
 		if train:
@@ -142,11 +164,11 @@ def proc(iter_list,train=True):
 			accum_loss.backward()
 			optimizer.update()
 
-#	if train:
-#		print "total_loss:", total_loss
-#	else:	
-#		ave_acc = float(total_acc) / cnt
-#		print "ave_acc:", ave_acc
+	if train:
+		print "total_loss:", total_loss
+	else:	
+		ave_acc = float(total_acc) / cnt
+		print "ave_acc:", ave_acc
 
 	return float(total_acc) / cnt
 	
@@ -157,16 +179,13 @@ if __name__ == '__main__':
 	# 未知語(:k)が引数として与えられた場合、id(:v)を付与する
 	vocab = collections.defaultdict(lambda: len(vocab))
 	for data_id in range(1,21):
-		print "-------------------------------------"
-		print "task_id:", data_id
-		data_id = 8
 #	data_id = 1
 		# glob.glob: マッチしたパスをリストで返す
 		fpath = glob.glob('%s/qa%d_*train.txt' % (root_path, data_id))[0]
 		train_data = data.parse_data(fpath, vocab)
 		fpath = glob.glob('%s/qa%d_*test.txt' % (root_path, data_id))[0]
 		test_data = data.parse_data(fpath, vocab)
-#		print('Training data: %d' % len(train_data))		# 文id=1で区切ったとき(story)のデータ数
+		print('Training data: %d' % len(train_data))		# 文id=1で区切ったとき(story)のデータ数
 		train_data = convert_data(train_data, args.gpu)
 		test_data = convert_data(test_data, args.gpu)
 		model = MemNN(len(vocab), 20, 50)	# (n_units:word_embeddingの次元数(=20), n_vocab:語彙数, max_mem=50)
@@ -175,7 +194,7 @@ if __name__ == '__main__':
 			xp = cupy
 		else:
 			xp = np
-		print vocab
+
 		# Setup an optimizer	
 		optimizer = optimizers.Adam(alpha=0.01, beta1=0.9, beta2=0.999, eps=1e-6)
 		optimizer.setup(model)
@@ -183,8 +202,8 @@ if __name__ == '__main__':
 		batch_size = 1
 	#	print len(train_data)		# 1000
 
-		for epoch in range(40):
-#			print "epoch:", epoch
+		for epoch in range(20):
+			print "epoch:", epoch
 			train_iter = chainer.iterators.SerialIterator(train_data, batch_size, repeat=False)
 			test_iter = chainer.iterators.SerialIterator(test_data, batch_size, repeat=False, shuffle=False)
 			proc(train_iter, train=True)
