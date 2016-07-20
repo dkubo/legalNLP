@@ -112,21 +112,6 @@ class MemNN(chainer.Chain):
         return F.softmax_cross_entropy(a, y), F.accuracy(a, y)
 
 
-def make_batch_sentence(lines):
-    batch_size = len(lines)
-    max_sent_len = max(len(line.sentence) for line in lines)
-    # Fill zeros
-    ws = numpy.zeros((batch_size, max_sent_len), dtype=numpy.int32)
-    for i, line in enumerate(lines):
-        ws[i, 0:len(line.sentence)] = line.sentence
-    if xp is cupy:
-        ws = chainer.cuda.to_gpu(ws)
-
-    lengths = xp.array([len(line.sentence) for line in lines], dtype=numpy.int32)
-
-    return ws, lengths
-
-
 def proc(proc_data, batch_size, train=True):
     total_loss = 0
     total_acc = 0
@@ -167,7 +152,7 @@ def proc(proc_data, batch_size, train=True):
             opt.update()
             model.fix_ignore_label()
 
-    #print('loss: %.4f\tacc: %.2f' % (float(total_loss), float(total_acc) / count * 100))
+    print('loss: %.4f\tacc: %.2f' % (float(total_loss), float(total_acc) / count * 100))
     return float(total_acc) / count
 
 
@@ -181,7 +166,7 @@ def convert_data(train_data, gpu):
         for sent in story:
             if isinstance(sent, data.Sentence):
                 if i == 50:
-                    mem[0:i-1, :] = mem[1:i, :]
+                    mem[0:i-1, :] = mem[1:i, :]			
                     mem_length[0:i-1] = mem_length[1:i]
                     i -= 1
                 mem[i, 0:len(sent.sentence)] = sent.sentence
@@ -205,7 +190,8 @@ def convert_data(train_data, gpu):
 if __name__ == '__main__':
     import data
     vocab = collections.defaultdict(lambda: len(vocab))
-    data_dir = '/home/unno/qa/tasks_1-20_v1-2'
+#    data_dir = '/home/unno/qa/tasks_1-20_v1-2'
+    data_dir = '../../data/tasks_1-20_v1-2'
     data_type = 'en'
     for data_id in range(1, 21):
 
@@ -243,6 +229,6 @@ if __name__ == '__main__':
             proc(train_data, batch_size, train=True)
             acc = proc(test_data, batch_size, train=False)
 
-        acc = acc * 100
+        acc = acc * 100			# convert from ratio to %
         err = 100 - acc
         print('%d: acc: %.2f\terr: %.2f' % (data_id, acc, err))
