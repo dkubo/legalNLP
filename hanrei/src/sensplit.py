@@ -12,7 +12,7 @@ class SenSplit:
 		merge = ""
 		open_cnt = 0
 		close_cnt = 0
-		res = self.text.split("。")
+		res = self.text.split(u"。")
 		pt_o = re.compile(r"(\(|（|「)")
 		pt_c = re.compile(r"(\)|）|」)")
 
@@ -20,7 +20,7 @@ class SenSplit:
 			open_cnt += len(pt_o.findall(part))
 			close_cnt += len(pt_c.findall(part))
 			if open_cnt > close_cnt:
-				merge += part + "。"
+				merge += part + u"。"
 			else:
 				merge += part
 				sensp.append(merge)
@@ -28,7 +28,7 @@ class SenSplit:
 		return sensp
 
 if __name__ == '__main__':
-	sensp = SenSplit("ぷよぷよしたいな。でも、（たぶん。）テトリスでもいいかも！んんー。")
+	sensp = SenSplit(u"ぷよぷよしたいな。でも、（たぶん。）テトリスでもいいかも！んんー。")
 	result = sensp()
 	for i in result:
 		print i
