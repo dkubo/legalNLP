@@ -19,7 +19,7 @@ def getmwe(dict)
 	data_hash.each{|mweid, value|
 		mwelist.push([value["suw_lemma"], value["left"], value["meaning"]])
 		for mwe in value["variation_lemma"]
-			mwelist.push([mwe, value["left"], value["meaning"]])
+			mwelist.push([mweid, mwe, value["left"], value["meaning"]])
 		end
 	}
 
@@ -129,7 +129,7 @@ def	writeCSV(fname)
 	file.close
 end
 
-def matching(mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash)
+def matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash)
 	m_frg, leftconst, totallen = 0, leftconst[0].scan(/.{1,2}/), 0
 
 	lemma.each_with_index do |lempart, idx|  	# sentence loop
@@ -157,7 +157,7 @@ def matching(mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash)
 				p mwe
 				p sentence
 				precont, matched, postcont = splitCont(mwe, startlen, endlen, start_idx, sentence)		# 出力用整形
-				$outdata.push([leftconst.join(), s_id, startlen.to_s, endlen.to_s, precont, matched, postcont, meaning])
+				$outdata.push([mweid, s_id, startlen.to_s, endlen.to_s, precont, matched, postcont, meaning])
 				m_frg = 0
 			end
 		end
@@ -197,9 +197,9 @@ def proc(pathtocorp, mwelist, consthash)
 
 	sent_hash.each{|s_id, v|
 		sentence, lemma, sentpos = makeArray(v)
-		mwelist.each{|mwe, leftconst, meaning|
-			# next if mwe.length == 1
-			matching(mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash)
+		mwelist.each{|mweid, mwe, leftconst, meaning|
+			next if mwe.length == 1
+			matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash)
 		}
 	}
 end
@@ -210,7 +210,7 @@ def main()
 	consthash = getConst()
 
 	# 各辞書からMWEのリストを取得
-	mwelist = getmwe(MYDIC)	# [[mwe, leftconst, meaning], [], ...]
+	mwelist = getmwe(MYDIC)	# [[mweid, mwe, leftconst, meaning], [], ...]
 	# p mwelist.length		# 3717
 
 	# 辞書for文
@@ -220,7 +220,8 @@ def main()
 		end
 
 	# csv書き込み
-	writeCSV("matced_mwe_oneword.csv")
+	writeCSV("matced_mwe.csv")
+	# writeCSV("matced_mwe_oneword.csv")
 end
 
 main()
