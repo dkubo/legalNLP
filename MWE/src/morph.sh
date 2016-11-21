@@ -1,0 +1,1 @@
+ echo $1 | mecab -d ~/usr/lib/mecab/dic/unidic/
