@@ -1,5 +1,9 @@
 #coding:utf-8
 
+#class PrecedentData():
+
+
+
 # 語id取得
 def get_wid(vocab, words):
 	return [vocab[word] for word in words]
@@ -15,7 +19,7 @@ def get_data(vocab):
 	train_data.append(get_wid(vocab, train_words))
 	train_words = ["BOS","私は","三郎","では","ありません","。","EOS"]
 	train_data.append(get_wid(vocab, train_words))
-	train_words = ["BOS","私は","五郎","では","ありません","。","EOS"]
+	train_words = ["BOS","私は","五郎","です","。","EOS"]
 	train_data.append(get_wid(vocab, train_words))
 	# テストデータ
 	test_words = ["BOS","あなたは","太郎","では","ありません","。","EOS"]

@@ -232,6 +232,5 @@ def main():
     result = evaluator()
     print('test perplexity:', np.exp(float(result['main/loss'])))
 
-
 if __name__ == '__main__':
     main()

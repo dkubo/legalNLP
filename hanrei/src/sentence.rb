@@ -2,6 +2,7 @@
 
 require './sqlite3.rb'
 require './senSplit.rb'
+
 """
 判決文の文分割を行う
 ・目次の情報も参照する必要あり

@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 import collections
 import data
+import pickle
 
 import chainer
 from chainer import links as L
@@ -20,7 +21,7 @@ class RNNLM(chainer.Chain):
 			l3 = L.Linear(word_emd_size, n_vocab),
 		)
 	
-	def __call__(self, x, ans, train):
+	def __call__(self, x, ans=None, train=True):
 		h0 = self.embed(x)
 		h1 = self.l1(h0)
 		h2 = self.l2(h1)
@@ -28,10 +29,14 @@ class RNNLM(chainer.Chain):
 		if train:
 			return F.softmax_cross_entropy(y, ans)
 		else:
-			return F.accuracy(y, ans)
+			if ans is None:
+				return y
+			else:
+				return F.accuracy(y, ans)
 	
 	def reset_state(self):
 		self.l1.reset_state()
+		self.l2.reset_state()
 	
 def proc(iter_list, train):
 	toral_loss = 0.0
@@ -82,6 +87,15 @@ def padding(data):
 		pad_data.append(sentence)
 	return pad_data
 
+def dump_model(model, gpu, epoch):
+	if gpu >= 0:
+		model.to_cpu()
+		pickle.dump(model, open('model'+str(epoch), 'wb'),-1)
+		model.to_gpu()
+	else:
+		pickle.dump(model, open('model'+str(epoch), 'wb'),-1)
+				
+	return model
 
 # 引数処理
 def get_arg():
@@ -90,45 +104,59 @@ def get_arg():
 	args = parser.parse_args()
 	return args
 
-# 引数取得
-args = get_arg()
 
-vocab = collections.defaultdict(lambda: len(vocab))
+if __name__ == '__main__':
+	# 引数取得
+	args = get_arg()
 
-# データ取得
-train_data, test_data, vocab = data.get_data(vocab)
-sentence_maxlen = max(len(sentence) for sentence in train_data)
-train_data = padding(train_data)
-test_data = padding(test_data)
-# numpy型に変換
-train_data = np.array(train_data, dtype=np.int32)
-test_data = np.array(test_data, dtype=np.int32)
+	vocab = collections.defaultdict(lambda: len(vocab))
 
-# 語彙数
-n_vocab = len(vocab)
+	# データ取得
+	train_data, test_data, vocab = data.get_data(vocab)
+	sentence_maxlen = max(len(sentence) for sentence in train_data)
+	train_data = padding(train_data)
+	test_data = padding(test_data)
 
-# モデル
-model = RNNLM(n_vocab,5)
+	# inverse key and value
+	inv_vocab = {v:k for k, v in vocab.items()}
+	#for k,v in inv_vocab.items():
+	#	print k,v
 
-if args.gpu >= 0:
-	model.to_gpu()
-	xp = cupy
-else:
-	xp = np
+	# numpy型に変換
+	train_data = np.array(train_data, dtype=np.int32)
+	test_data = np.array(test_data, dtype=np.int32)
 
-# Setup an optimizer
-optimizer = optimizers.Adam()
-optimizer.setup(model)
+	# 語彙数
+	n_vocab = len(vocab)
 
-batch_size = 2
-for epoch in range(100):
-	print "epoch:", epoch
-	train_iter = chainer.iterators.SerialIterator(train_data, batch_size, repeat=False)
-	test_iter = chainer.iterators.SerialIterator(test_data, batch_size, repeat=False, shuffle=False)
-	proc(train_iter, train=True)
-	proc(test_iter, train=False)
+	# モデル
+	model = RNNLM(n_vocab,10)
 
+	if args.gpu >= 0:
+		model.to_gpu()
+		xp = cupy
+	else:
+		xp = np
 
+	# Setup an optimizer
+	optimizer = optimizers.Adam()
+	optimizer.setup(model)
 
+	batch_size = 2
+	for epoch in range(10):
+		model.reset_state()
+		print "epoch:", epoch
+		train_iter = chainer.iterators.SerialIterator(train_data, batch_size, repeat=False)
+		test_iter = chainer.iterators.SerialIterator(test_data, batch_size, repeat=False, shuffle=False)
+		proc(train_iter, train=True)
+		proc(test_iter, train=False)
+		if (epoch+1)%10 == 0:
+			model = dump_model(model, args.gpu, epoch+1)
 
+	gen_word = 0		# BOS
+	while gen_word != vocab['EOS']:		# 7: EOS
+		gen_word = np.array([gen_word], dtype=np.int32)
+		print gen_word.shape
+		gen_word = model(gen_word, ans=None, train=False)
+		print gen_word
 
