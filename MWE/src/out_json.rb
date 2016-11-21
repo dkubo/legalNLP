@@ -11,14 +11,14 @@ require 'open3'
 require 'yaml'
 
 # for local
-HOME = "/home/daiki/Desktop/CS"
-COMAINU = HOME + "/20161007/dic/coma/Comp.txt"
-TSUTSUJI = HOME + "/20161007/dic/tsutsuji/tsutsuji-1.1/tsutsuji1.1_utf-8.xml"
+# HOME = "/home/daiki/Desktop/CS"
+# COMAINU = HOME + "/20161007/dic/coma/Comp.txt"
+# TSUTSUJI = HOME + "/20161007/dic/tsutsuji/tsutsuji-1.1/tsutsuji1.1_utf8_edit.xml"
 
 # for itc
-# HOME = "/home/is/daiki-ku/Desktop/github/legalNLP/MWE"
-# COMAINU = HOME + "/data/20161007/dic/coma/Comp.txt"
-# TSUTSUJI = HOME + "/data/20161007/dic/tsutsuji/tsutsuji-1.1/tsutsuji1.1_utf-8.xml"
+HOME = "/home/is/daiki-ku/Desktop/github/legalNLP/MWE"
+COMAINU = HOME + "/data/20161007/dic/coma/Comp.txt"
+TSUTSUJI = HOME + "/data/20161007/dic/tsutsuji/tsutsuji-1.1/tsutsuji1.1_utf8_edit.xml"
 
 def parsing_coma(mwe)
 	luw_list = []
@@ -64,7 +64,21 @@ def parsing_mecab(nm, mwe)
 		suw_lem_yomi.push(n.feature.split(',')[6]) unless n.surface == ""# or yomi == "*"
 		suw_lem_pos.push(pos) unless n.surface == ""
 	end
+	suw_lem = checkHyphen(suw_lem)
 	return suw_lem, suw_lem_yomi, suw_lem_pos
+end
+
+# unidicでの解析結果にハイフンが含まれる場合がある⇒対処
+def checkHyphen(lemma)
+	lemmanew = []
+	lemma.each{|part|
+		if /-/ =~ part
+			lemmanew.push($`)
+		else
+			lemmanew.push(part)
+		end
+	}
+	return lemmanew
 end
 
 # comainuの出力を整形する
@@ -154,6 +168,7 @@ def main()
 			l3id = getAttribute(l3, "L1to3ID")
 			l_hash["headword"], l_hash["global_pos"], l_hash["meaning"] = entry, pos_hash[pos_id], meaning
 			l_hash["suw_lemma"], l_hash["suw_lemma_yomi"], l_hash["suw_lemma_pos"] = parsing_mecab(nm, l_hash["headword"])
+			p l_hash["suw_lemma"] if /-/ =~ l_hash["suw_lemma"].join()
 			l_hash["variation"], l_hash["variation_lemma"], l_hash["left"], l_hash["right"] = [], [], [], []
 			l_hash["left"].push(left)
 
@@ -169,6 +184,7 @@ def main()
 					if variation != entry
 						l_hash["variation"].push(variation)
 						v_suw_lem, _, _ = parsing_mecab(nm, variation)
+						p v_suw_lem if /-/ =~ v_suw_lem.join()
 						l_hash["variation_lemma"].push(v_suw_lem) unless v_suw_lem == nil
 					end
 				}
@@ -179,30 +195,14 @@ def main()
 			l_hash["left"].uniq!
 			l_hash["variation"].uniq!
 			l_hash["variation_lemma"].uniq!
+
 			g_hash[l3id] = l_hash
 		}
 	}
 
 	# puts JSON.pretty_generate(g_hash)
-	writeJSON("./tsutsuji_dic.json", g_hash)
+	writeJSON("./tsutsuji_dic_20161121.json", g_hash)
 
-	# ----------------------------------------------------------------------
-	# for comainu
-	# lines = getdict(COMAINU)
-	# lines.each_with_index{|line, idx|
-	# 	id = idx
-	# 	l_hash = Hash.new()
-	# 	hash[id] = l_hash
-	# 	l_hash["global_pos"] = line[0]		# 全体品詞
-	# 	l_hash["lemma_yomi"] = line[1]		# 標準形ヨミ
-	# 	l_hash["lemma"] = line[2]					# 標準形
-	# 	l_hash["headword_yomi"] = line[3]	# 出現形ヨミ
-	# 	l_hash["headword"] = line[4]			# 出現形
-	# 	l_hash["suw"], l_hash["suw_yomi"], l_hash["suw_pos"] = parsing_mecab(nm, l_hash["headword"])
-	# 	l_hash["luw"], l_hash["luw_yomi"], l_hash["luw_pos"] = parsing_coma(l_hash["headword"])
-	# }
-	# writeJSON("./jmwe_dic2.json", hash)
-	# ----------------------------------------------------------------------
 end
 
 main()
