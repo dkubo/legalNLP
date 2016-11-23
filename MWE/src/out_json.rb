@@ -20,6 +20,9 @@ HOME = "/home/is/daiki-ku/Desktop/github/legalNLP/MWE"
 COMAINU = HOME + "/data/20161007/dic/coma/Comp.txt"
 TSUTSUJI = HOME + "/data/20161007/dic/tsutsuji/tsutsuji-1.1/tsutsuji1.1_utf8_edit.xml"
 
+CONST1="./const/const1_unidic.tsv"
+CONST2="./const/const2.tsv"
+
 def parsing_coma(mwe)
 	luw_list = []
 	yomi_list = []
@@ -99,7 +102,7 @@ end
 
 def getConst()
 	consthash = {}
-	file_1 = open("const1_unidic.tsv",'r')
+	file_1 = open(CONST1,'r')
 	file_1.each_line{|l|
 		c_list = []
 		sig, const_list = l.chomp.split("\t")
@@ -108,7 +111,7 @@ def getConst()
 		}
 		consthash[sig] = c_list
 	}
-	file_2 = open("const2.tsv",'r')
+	file_2 = open(CONST2,'r')
 	file_2.each_line{|l|
 		new_list = []
 		sig, const_list = l.chomp.split("\t")

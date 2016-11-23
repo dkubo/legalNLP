@@ -12,6 +12,9 @@ TSUTUJI = "../data/20161007/dic/tsutsuji/tsutsuji-1.1/L9_utf8.list"
 
 # MYDIC = "./tsutsuji_dic_20161118.json"
 MYDIC = "./tsutsuji_dic_20161121.json"	# 先頭の「う」と「ん」を削除、ハイフン処理をした辞書
+CONST1="./const/const1_unidic.tsv"
+CONST2="./const/const2.tsv"
+RESULT="../result/matced_mwe.csv"
 
 def getmwe(dict)
 	mwelist = Array.new()
@@ -54,7 +57,7 @@ end
 
 def getConst()
 	consthash = {}
-	file_1 = open("const1_unidic.tsv",'r')
+	file_1 = open(CONST1,'r')
 	file_1.each_line{|l|
 		c_list = []
 		sig, const_list = l.chomp.split("\t")
@@ -64,7 +67,7 @@ def getConst()
 		consthash[sig] = c_list
 	}
 
-	file_2 = open("const2.tsv",'r')
+	file_2 = open(CONST2,'r')
 	file_2.each_line{|l|
 		new_list = []
 		sig, const_list = l.chomp.split("\t")
@@ -236,8 +239,7 @@ def main()
 		end
 
 	# csv書き込み
-	writeCSV("matced_mwe.csv", outdata)
-	# writeCSV("matced_mwe_oneword.csv")
+	writeCSV(RESULT, outdata)
 end
 
 main()
