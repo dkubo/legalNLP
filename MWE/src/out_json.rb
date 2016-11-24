@@ -22,6 +22,7 @@ TSUTSUJI = HOME + "/data/20161007/dic/tsutsuji/tsutsuji-1.1/tsutsuji1.1_utf8_edi
 
 CONST1="./const/const1_unidic.tsv"
 CONST2="./const/const2.tsv"
+RESULT_DIC="../result/tsutsuji_dic_20161121.json"
 
 def parsing_coma(mwe)
 	luw_list = []
@@ -204,7 +205,7 @@ def main()
 	}
 
 	# puts JSON.pretty_generate(g_hash)
-	writeJSON("./tsutsuji_dic_20161121.json", g_hash)
+	writeJSON(RESULT_DIC, g_hash)
 
 end
 
