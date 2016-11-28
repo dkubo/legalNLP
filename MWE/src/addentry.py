@@ -1,10 +1,13 @@
 #coding: utf-8
 
 import json
+import copy
 from collections import defaultdict
 
 DICT="../result/tsutsuji_dic_20161121.json"
 ADDLIST="../result/candidate_edit.txt"
+RESULT_DIC="../result/tsutsuji_dic_20161128.json"
+
 
 def opendic(path):
 	with open(path, 'r') as f:
@@ -20,12 +23,64 @@ def openaddlist(path):
 			addhash[mwe] = mweidlist.split(",")
 	return addhash
 
+def writedic(jsondic):
+	with open(RESULT_DIC, "w") as f:
+		json.dump(jsondic, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',', ': '))
+
+
+def addDa(jsondic, mweid, mwe):
+	if "から" == mwe:
+		spemweid = "0282C"
+	else:
+		spemweid = "1201C"
+	jsondic[spemweid] = copy.deepcopy(jsondic[mweid])
+
+	jsondic[spemweid]["headword"] = "だ"+jsondic[spemweid]["headword"]
+	jsondic[spemweid]["suw_lemma"] = ["だ"]+jsondic[spemweid]["suw_lemma"]
+	jsondic[spemweid]["suw_lemma_yomi"] = ["ダ"]+jsondic[spemweid]["suw_lemma_yomi"]
+	jsondic[spemweid]["global_pos"] = "接続詞型"
+	jsondic[spemweid]["left"] = ["j0"]
+
+	variationlist = jsondic[spemweid]["variation"]
+	variation_lemmalist = jsondic[spemweid]["variation_lemma"]
+	jsondic[spemweid]["variation"] = []
+	jsondic[spemweid]["variation_lemma"] = []
+
+	for variation in variationlist:
+		jsondic[spemweid]["variation"].append("だ"+variation)
+	for variation_lemma in variation_lemmalist:
+		jsondic[spemweid]["variation_lemma"].append(["だ"]+variation_lemma)
+
+	return jsondic
+
+def makeentry(mweid, mwe, jsondic):
+	if ("から" == mwe) or ("からといって" == mwe):	#この場合は、新しいmweidを付与して、エントリを作る
+		jsondic = addDa(jsondic, mweid, mwe)
+	else:
+		if "Q" == mweid[-1]:	# Q→C
+			newmweid = mweid[0:-1] + "C"
+			jsondic[newmweid] = copy.deepcopy(jsondic[mweid])
+
+			jsondic[newmweid]["global_pos"] = "接続詞型"
+			jsondic[newmweid]["left"] = ["j0"]
+
+		else:	# C→Q
+			newmweid = mweid[0:-1] + "Q"
+			jsondic[newmweid] = copy.deepcopy(jsondic[mweid])
+			jsondic[mweid]["left"].append("j0")	# Cの制約にj0を加える
+			jsondic[newmweid]["global_pos"] = "接続助詞型"
+
+	return jsondic
+
 def main():
 	jsondic = opendic(DICT)
 	addhash = openaddlist(ADDLIST)
-	for mwe, mweidlist in addhash.items():
-		for mweid in mweidlist:
-			print(jsondic[mweid])
+	for mwe, addmweidlist in addhash.items():
+
+		for mweid in addmweidlist:
+			jsondic = makeentry(mweid, mwe, jsondic)
+
+	writedic(jsondic)
 
 if __name__ == '__main__':
 	main()
