@@ -13,14 +13,15 @@ def opendic(path):
 def openaddlist(path):
 	with open(path, 'r') as f:
 		for line in f:
-			mwe, mweidlist = f.rstrip().split(",")
+			mwe, mweidlist = line.rstrip().split("\t")
+			print(mwe, mweidlist)
 
 
 def main():
 	jsondic = opendic(DICT)
-	print(jsondic)
+	# print(jsondic)
 
-	# openaddlist(ADDLIST)
+	openaddlist(ADDLIST)
 
 if __name__ == '__main__':
 	main()
