@@ -10,10 +10,10 @@ require 'csv'
 # for ITC
 TSUTUJI = "../data/20161007/dic/tsutsuji/tsutsuji-1.1/L9_utf8.list"
 
-MYDIC = "../result/tsutsuji_dic_20161121.json"	# 先頭の「う」と「ん」を削除、ハイフン処理をした辞書
+MYDIC = "../result/tsutsuji_dic_20161128.json"	# 先頭の「う」と「ん」を削除、ハイフン処理をした辞書
 CONST1="./const/const1_unidic.tsv"
 CONST2="./const/const2.tsv"
-RESULT="../result/matced_mwe.csv"
+RESULT="../result/matced_mwe_1129.csv"
 
 def getmwe(dict)
 	mwelist = Array.new()
@@ -158,20 +158,21 @@ def matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, con
 			# 品詞等の制約を確認			
 			constlist = consthash[leftconst[0]]		# leftconst[1]は全て"90"
 			if m_frg == 1
-				m_frg = constCheck(constlist, sentpos[start_idx-2], m_frg)
-				m_frg = constCheck(constlist, sentpos[start_idx-1], m_frg) unless m_frg != 0
+				m_frg = constCheck(constlist, sentpos[start_idx-2], start_idx, m_frg)
+				m_frg = constCheck(constlist, sentpos[start_idx-1], start_idx, m_frg) unless m_frg != 0
 			end
-
 			# MWEが完全にマッチしたとき
 			if m_frg == 1
-				# precont, matched, postcont = splitCont(mwe, start_idx, sentence)		# 出力用整形
 				precont, matched, postcont, startlen, endlen = splitCont(mwe, start_idx, sentence)		# 出現形の文に対してのstartlen等を取得
-				# p matched
-				# p sentence
-				# p meaning
+				# p "outdata:", outdata
+				# p "mweid:", mweid
+				# p "s_id:", s_id
+				# p "matched:", matched
+				# p "precont:", precont
+				# p "postcont:", postcont
+				# p "meaning:", meaning
 				# p startlen, endlen
 				outdata.push([mweid, s_id, startlen.to_s, endlen.to_s, precont, matched, postcont, meaning])	# startlen, endlen: 標準形の文に対してのもの
-				# outdata.push([leftconst.join(), s_id, startlen.to_s, endlen.to_s, precont, matched, postcont, meaning])
 				m_frg = 0
 			end
 		end
@@ -181,22 +182,31 @@ def matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, con
 end
 
 # 制約リスト, 確認対象の品詞等
-def constCheck(constlist, sentleft, m_frg)
+def constCheck(constlist, sentleft, start_idx, m_frg)	# (辞書側の制約, 文内の品詞等, マッチフラグ)
 	constlist.each{|const|
 		check = 1
 		const = const[0..-2]	# 原形の制約は無視
 		const.zip(sentleft).each{|part, pos|
+			# 品詞階層の整合性をとる（辞書側の品詞等制約の階層と、実際の文内の品詞等）
+			pos = pos.split("-")[0...part.split("-").length].join("-")
 			if part == "*" or part == pos 	# "matched!"
 				next
-			else	# "not matched!"
+
+			elsif part == "None"	# 文頭に接続詞が来た場合
+				if start_idx == 0	# matched!
+					next
+				else	# not matched!
+					check = 0
+					break
+				end
+
+			else	# not matched!
 				check = 0
 				break
 			end
 		}
 		if check == 1 then
 			m_frg = 1
-			# p "---------------------------"
-			# p const
 			break
 		else
 			m_frg = 0
