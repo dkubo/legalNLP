@@ -178,6 +178,7 @@ def matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, con
 		end
 		totallen += lempart.length
 	end
+
 	return outdata
 end
 
@@ -246,9 +247,8 @@ def main()
 			pathtocorp = "../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
 			outdata = proc(pathtocorp, mwelist, consthash, outdata)
 		end
-
 	# csv書き込み
-	writeCSV(RESULT, outdata)
+	# writeCSV(RESULT, outdata)
 end
 
 main()

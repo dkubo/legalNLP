@@ -1,19 +1,46 @@
 #coding: utf-8
 
-from collections import defaultdict
+from collections import defaultdict, Counter
+import csv
+import copy
 
 # マッチスパンが入れ子or 包含になっているものを確認
 # マッチMWEの種類数カウント
 
-RESULT="../result/matced_mwe_1129.csv"
+def data(fpath, frg):
+	meaninglist, matchspan, output = [], defaultdict(list), defaultdict(list)
 
-def push(spanobj, ireko):
-	if ireko == []:
-		ireko.append(spanobj)
-	else:
-		if not spanobj in ireko:
-			ireko.append(spanobj)
+	with open(fpath, "r") as f:
+		for line in f:
+			if frg == 0:
+				mweid, sentid, b, e, pre, mwe, post, meaning = line.rstrip().split(",")
+				b, e, mweid, meaning = int(b), int(e), [mweid], [meaning]
+				output[(sentid, (b,e), mweid[0][-1])].append([mweid, sentid, b, e, pre, mwe, post, meaning])
+				matchspan[sentid, mweid[0][-1]].append((b,e))
+			else:
+				mweid, sentid, b, e, pre, mwe, post, meaning = line.rstrip().split("\t")
+				b, e, mweid, meaning = int(b), int(e), mweid, meaning
+				output[(sentid, (b,e), mweid)].append([mweid, sentid, b, e, pre, mwe, post, meaning])
+				matchspan[sentid, mweid].append((b,e))
+			meaninglist.append(meaning)
+	return output, matchspan, meaninglist
 
+
+def writeCSV(MOD_RESULT, outdata):
+	# '\t'.join([str(i) for i in outdata])
+	with open(MOD_RESULT, 'w') as f:
+		writer = csv.writer(f, lineterminator='\n', delimiter = '\t')
+		writer.writerows(outdata)
+
+def countMeaning(meaninglist):
+	meaninglist = sorted(set(meaninglist), key=meaninglist.index)
+	print(meaninglist)
+	print(len(meaninglist))		# 77
+
+
+def push(ireko, begin, end):
+	if not end in ireko[begin]:
+		ireko[begin].append(end)
 	return ireko
 
 def recur(value, ireko):
@@ -22,89 +49,111 @@ def recur(value, ireko):
 			beginobj, endobj = begin, end
 		else:
 			if (beginobj == begin):
-				if (end < endobj):	# 短い場合
-			# if (beginobj < begin < endobj) or (beginobj < end < endobj):
-					spanobj = [(begin, end), (beginobj, endobj)]
-					ireko = push(spanobj, ireko)
-					# spanobj.sort()
-				elif (end > endobj):	# 長い場合
-					spanobj = [(beginobj, endobj), (begin, end)]
-					ireko = push(spanobj, ireko)
-				# else:	# 等しい場合
-
+				push(ireko, beginobj, end)
+				push(ireko, beginobj, endobj)
 
 	return ireko
 
 def irekoCheck(value, output):
-	ireko = []
-	for cnt in range(0, len(value)):
-		if cnt != 0:
-			buf = value[0]
-			value[0] = value[cnt]
-			value[cnt] = buf
+	ireko = defaultdict(list)
+	other = copy.deepcopy(value)
+	spannum = len(value)
+
+	for cnt in range(0, spannum):
 		ireko = recur(value, ireko)
+		value.pop(0)
 
-	# 長いものを採用
-	# output[(sentid, (b,e))]
-	return ireko
+	spans = getlongerspan(ireko, other)
 
-def printforireko(output, sentid, ireko):
-	global samemweid
-	global difmweid
+	return spans
 
-	for span in ireko:
-		for i, (_, _, _, mweid_1, meaning_1) in enumerate(output[(sentid, span[0])]):
-			for j, (_, _, _, mweid_2, meaning_2) in enumerate(output[(sentid, span[1])]):
-				print("-------------------------------------")
-				print((sentid, span[0]), output[(sentid, span[0])][i])
-				print((sentid, span[1]), output[(sentid, span[1])][j])
-				print("-------------------------------------")
+def getlongerspan(ireko, other):
+	spans = []
 
-				if mweid_1 == mweid_2:
-					samemweid += 1
-				else:
-					difmweid += 1
+	for startidx, endidxlist in ireko.items():
+		endidxlist.sort()
+		for endidx in endidxlist:
+			other.remove((startidx, endidx))
 
-def printforcollect(k, value):
-	global samespanid
+		# 長いものを採用
+		span = (startidx, endidxlist[-1])
+		spans.append(span)
+	
+	if other != []:
+		spans += other
 
-	print("------------------------")
-	for v in value:
-		pre, mwe, post, mweid, meaning = v
-		samespanid += 1
-		print(k, v)
-	print("------------------------")
+	return spans
+
+def removeIreko(output, matchspan):
+	spans, outdata = [], []
+
+	for (sentid, mweid), v in matchspan.items():
+		if len(v) >= 2:		# 同一の文内で、複数マッチしている場合⇒入れ子等になっている可能性がある
+			spans = irekoCheck(v, output)
+
+			for span in spans:
+				outdata += output[(sentid, span, mweid)]
+
+		else:
+			outdata += output[(sentid, v[0], mweid)]
+
+	# print(outdata)	#
+	# print(len(outdata))	#
+	return outdata
+
+def extractSamespan(v):
+	return [key for key,val in Counter(v).items() if val > 1]
+
+def	collectMeaning(sentid, posid, samespans, output2, outdata, needed_meaninglist):
+	for samespan in samespans:
+		mweids, meanings = [], []		# スパン,品詞,意味は全く同じで、mweidだけ違う場合に対象
+		for mweid, sentid, b, e, pre, mwe, post, meaning in output2[(sentid, samespan, posid)]:
+			if not meaning[0] in meanings:
+				meanings += meaning
+			if not mweid in mweids:
+				mweids += mweid
+
+			if not meaning[0] in needed_meaninglist:
+				needed_meaninglist += meaning
+
+		outdata.append([mweids, sentid, b, e, pre, mwe, post, meanings])
+	return needed_meaninglist
+
+def checkSamespan(output2, matchspan2):
+	outdata, needed_meaninglist = [], []	# インストラクションが必要な意味カテゴリのリスト用
+
+	for k, v in matchspan2.items():
+		sentid, posid = k
+		samespans = extractSamespan(v)
+		v = list(set(v) - set(samespans))
+		if samespans != []:		# スパンに重複がある場合
+			for span in v:
+				outdata += output2[(sentid, span, posid)]
+			needed_meaninglist = collectMeaning(sentid, posid, samespans, output2, outdata, needed_meaninglist)
+		else:
+			for span in v:
+				outdata += output2[(sentid, span, posid)]
+
+	# print(needed_meaninglist)
+	# print(len(needed_meaninglist))
+	return outdata
 
 def main():
-	meaninglist, matchspan, output = [], defaultdict(list), defaultdict(list)
+	fpath = "../result/matced_mwe_1129.csv"
+	outpath = "../result/matced_mwe_1129_mod.csv"
 
-	with open(RESULT, "r") as f:
-		for line in f:
-			mweid, sentid, b, e, pre, mwe, post, meaning = \
-															line.rstrip().split(",")
+	output, matchspan, meaninglist = data(fpath, frg=0)
+	outdata = checkSamespan(output, matchspan)
+	writeCSV(outpath, outdata)
 
-			b, e = int(b), int(e)
-			output[(sentid, (b,e))].append([pre, mwe, post, mweid, meaning])
-			matchspan[sentid].append((b,e))
-			meaninglist.append(meaning)
+	# countMeaning(meaninglist)
 
-	# meaninglist = sorted(set(meaninglist), key=meaninglist.index)
-	# print(meaninglist)
-	# print(len(meaninglist))		# 29
+	fpath = "../result/matced_mwe_1129_mod.csv"
+	outpath = "../result/matced_mwe_1130_mod.csv"
 
-	for sentid, v  in matchspan.items():
-		if len(v) >= 2:		# 同一の文内で、複数マッチしている場合⇒入れ子等になっている可能性がある
-			ireko = irekoCheck(v, output)
-			if ireko != []:
-				printforireko(output, sentid, ireko)
-
-	# print('totalpair: ', samemweid + difmweid)
-	# print('samemweid: ', samemweid)
-	# print('difmweid: ', difmweid)
-
-	# for k, value in output.items():
-	# 	printforcollect(k, value)
+	output, matchspan, meaninglist = data(fpath, frg=1)
+	outdata = removeIreko(output, matchspan)
+	writeCSV(outpath, outdata)
 
 if __name__ == '__main__':
-	samemweid, difmweid, samespanid = 0, 0, 0
 	main()
