@@ -5,7 +5,7 @@ from collections import defaultdict
 # マッチスパンが入れ子or 包含になっているものを確認
 # マッチMWEの種類数カウント
 
-RESULT="../result/matced_mwe.csv"
+RESULT="../result/matced_mwe_1129.csv"
 
 def push(spanobj, ireko):
 	if ireko == []:
@@ -21,11 +21,31 @@ def recur(value, ireko):
 		if i == 0:
 			beginobj, endobj = begin, end
 		else:
-			if (beginobj < begin < endobj) or (beginobj < end < endobj):
-				spanobj = [(beginobj, endobj), (begin, end)]
-				spanobj.sort()
-				ireko = push(spanobj, ireko)
+			if (beginobj == begin):
+				if (end < endobj):	# 短い場合
+			# if (beginobj < begin < endobj) or (beginobj < end < endobj):
+					spanobj = [(begin, end), (beginobj, endobj)]
+					ireko = push(spanobj, ireko)
+					# spanobj.sort()
+				elif (end > endobj):	# 長い場合
+					spanobj = [(beginobj, endobj), (begin, end)]
+					ireko = push(spanobj, ireko)
+				# else:	# 等しい場合
 
+
+	return ireko
+
+def irekoCheck(value, output):
+	ireko = []
+	for cnt in range(0, len(value)):
+		if cnt != 0:
+			buf = value[0]
+			value[0] = value[cnt]
+			value[cnt] = buf
+		ireko = recur(value, ireko)
+
+	# 長いものを採用
+	# output[(sentid, (b,e))]
 	return ireko
 
 def printforireko(output, sentid, ireko):
@@ -44,17 +64,6 @@ def printforireko(output, sentid, ireko):
 					samemweid += 1
 				else:
 					difmweid += 1
-
-def irekoCheck(value):
-	ireko = []
-	for cnt in range(0, len(value)):
-		if cnt != 0:
-			buf = value[0]
-			value[0] = value[cnt]
-			value[cnt] = buf
-		ireko = recur(value, ireko)
-
-	return ireko
 
 def printforcollect(k, value):
 	global samespanid
@@ -79,24 +88,22 @@ def main():
 			matchspan[sentid].append((b,e))
 			meaninglist.append(meaning)
 
-	meaninglist = sorted(set(meaninglist), key=meaninglist.index)
+	# meaninglist = sorted(set(meaninglist), key=meaninglist.index)
 	# print(meaninglist)
 	# print(len(meaninglist))		# 29
 
-	# for sentid, v  in matchspan.items():
-	# 	if len(v) >= 2:		# 同一の文内で、複数マッチしている場合⇒入れ子等になっている可能性がある
-	# 		ireko = irekoCheck(v)
-	# 		if ireko != []:
-	# 			printforireko(output, sentid, ireko)
-
+	for sentid, v  in matchspan.items():
+		if len(v) >= 2:		# 同一の文内で、複数マッチしている場合⇒入れ子等になっている可能性がある
+			ireko = irekoCheck(v, output)
+			if ireko != []:
+				printforireko(output, sentid, ireko)
 
 	# print('totalpair: ', samemweid + difmweid)
 	# print('samemweid: ', samemweid)
 	# print('difmweid: ', difmweid)
 
-	for k, value in output.items():
-		if len(value) >= 2:
-			printforcollect(k, value)
+	# for k, value in output.items():
+	# 	printforcollect(k, value)
 
 if __name__ == '__main__':
 	samemweid, difmweid, samespanid = 0, 0, 0
