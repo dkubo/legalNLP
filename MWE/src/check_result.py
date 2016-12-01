@@ -144,15 +144,15 @@ def main():
 	fpath1 = "../result/matced_mwe_1201.csv"
 	outpath1 = "../result/matced_mwe_1201_mod.csv"
 
-	output, matchspan, meaninglist = data(fpath1, frg=0)
-	outdata = checkSamespan(output, matchspan)
-	writeCSV(outpath1, outdata)
+	# output, matchspan, meaninglist = data(fpath1, frg=0)
+	# outdata = checkSamespan(output, matchspan)
+	# writeCSV(outpath1, outdata)
 
 
 	outpath2 = "../result/matced_mwe_1201_rmoneword.csv"
 	output, matchspan, meaninglist = data(outpath1, frg=1)
 	outdata = removeIreko(output, matchspan)
-	writeCSV(outpath2, outdata)
+	# writeCSV(outpath2, outdata)
 
 	# fpath = "../result/matced_mwe_1130_mod.csv"
 	# output, matchspan, meaninglist = data(fpath, frg=1)
