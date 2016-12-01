@@ -252,7 +252,7 @@ def main()
 			outdata = proc(pathtocorp, mwelist, consthash, outdata)
 		end
 	# csv書き込み
-	writeCSV(RESULT, outdata)
+	# writeCSV(RESULT, outdata)
 end
 
 main()

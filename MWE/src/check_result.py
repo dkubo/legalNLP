@@ -24,7 +24,6 @@ def data(fpath, frg):
 				b, e, mweid, meaning = int(b), int(e), mweid, meaning
 				output[(sentid, (b,e), mweid)].append([mweid, sentid, b, e, pre, mwe, post, meaning])
 				matchspan[sentid, mweid].append((b,e))
-				print(re.sub('\[|\]','',meaning).split(","))
 				meaninglist.append(meaning)
 	return output, matchspan, meaninglist
 
@@ -137,25 +136,23 @@ def checkSamespan(output2, matchspan2):
 			for span in v:
 				outdata += output2[(sentid, span, posid)]
 
-	# print(needed_meaninglist)
-	# print(len(needed_meaninglist))
+	print(needed_meaninglist)
+	print(len(needed_meaninglist))
 	return outdata
 
 def main():
-	fpath = "../result/matced_mwe_1201.csv"
-	outpath = "../result/matced_mwe_1201_mod.csv"
+	fpath1 = "../result/matced_mwe_1201.csv"
+	outpath1 = "../result/matced_mwe_1201_mod.csv"
 
-	output, matchspan, meaninglist = data(fpath, frg=0)
+	output, matchspan, meaninglist = data(fpath1, frg=0)
 	outdata = checkSamespan(output, matchspan)
-	writeCSV(outpath, outdata)
+	writeCSV(outpath1, outdata)
 
 
-	fpath = "../result/matced_mwe_1201_mod.csv"
-	outpath = "../result/matced_mwe_1201_last.csv"
-
-	output, matchspan, meaninglist = data(fpath, frg=1)
+	outpath2 = "../result/matced_mwe_1201_rmoneword.csv"
+	output, matchspan, meaninglist = data(outpath1, frg=1)
 	outdata = removeIreko(output, matchspan)
-	writeCSV(outpath, outdata)
+	writeCSV(outpath2, outdata)
 
 	# fpath = "../result/matced_mwe_1130_mod.csv"
 	# output, matchspan, meaninglist = data(fpath, frg=1)
