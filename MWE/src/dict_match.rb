@@ -9,21 +9,25 @@ require 'csv'
 
 # for ITC
 TSUTUJI = "../data/20161007/dic/tsutsuji/tsutsuji-1.1/L9_utf8.list"
-
 MYDIC = "../result/tsutsuji_dic_20161128.json"	# 先頭の「う」と「ん」を削除、ハイフン処理をした辞書
 CONST1="./const/const1_unidic.tsv"
 CONST2="./const/const2.tsv"
-RESULT="../result/matced_mwe_1129.csv"
+
+RESULT="../result/matced_mwe_1201.csv"
 
 def getmwe(dict)
 	mwelist = Array.new()
 	data_hash = JSON.parse(File.read(dict))
 
 	data_hash.each{|mweid, value|
-		mwelist.push([mweid, value["suw_lemma"], value["left"], value["meaning"]])
+		if value["suw_lemma"].length >= 2
+			mwelist.push([mweid, value["suw_lemma"], value["left"], value["meaning"]])
+		end
 
 		for mwe in value["variation_lemma"]
-			mwelist.push([mweid, mwe, value["left"], value["meaning"]])
+			if mwe.length >= 2
+				mwelist.push([mweid, mwe, value["left"], value["meaning"]])
+			end
 		end
 	}
 
@@ -248,7 +252,7 @@ def main()
 			outdata = proc(pathtocorp, mwelist, consthash, outdata)
 		end
 	# csv書き込み
-	# writeCSV(RESULT, outdata)
+	writeCSV(RESULT, outdata)
 end
 
 main()

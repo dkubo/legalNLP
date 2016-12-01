@@ -3,6 +3,7 @@
 from collections import defaultdict, Counter
 import csv
 import copy
+import re
 
 # マッチスパンが入れ子or 包含になっているものを確認
 # マッチMWEの種類数カウント
@@ -17,12 +18,14 @@ def data(fpath, frg):
 				b, e, mweid, meaning = int(b), int(e), [mweid], [meaning]
 				output[(sentid, (b,e), mweid[0][-1])].append([mweid, sentid, b, e, pre, mwe, post, meaning])
 				matchspan[sentid, mweid[0][-1]].append((b,e))
+				meaninglist.append(meaning)
 			else:
 				mweid, sentid, b, e, pre, mwe, post, meaning = line.rstrip().split("\t")
 				b, e, mweid, meaning = int(b), int(e), mweid, meaning
 				output[(sentid, (b,e), mweid)].append([mweid, sentid, b, e, pre, mwe, post, meaning])
 				matchspan[sentid, mweid].append((b,e))
-			meaninglist.append(meaning)
+				print(re.sub('\[|\]','',meaning).split(","))
+				meaninglist.append(meaning)
 	return output, matchspan, meaninglist
 
 
@@ -139,21 +142,25 @@ def checkSamespan(output2, matchspan2):
 	return outdata
 
 def main():
-	fpath = "../result/matced_mwe_1129.csv"
-	outpath = "../result/matced_mwe_1129_mod.csv"
+	fpath = "../result/matced_mwe_1201.csv"
+	outpath = "../result/matced_mwe_1201_mod.csv"
 
 	output, matchspan, meaninglist = data(fpath, frg=0)
 	outdata = checkSamespan(output, matchspan)
 	writeCSV(outpath, outdata)
 
-	# countMeaning(meaninglist)
 
-	fpath = "../result/matced_mwe_1129_mod.csv"
-	outpath = "../result/matced_mwe_1130_mod.csv"
+	fpath = "../result/matced_mwe_1201_mod.csv"
+	outpath = "../result/matced_mwe_1201_last.csv"
 
 	output, matchspan, meaninglist = data(fpath, frg=1)
 	outdata = removeIreko(output, matchspan)
 	writeCSV(outpath, outdata)
+
+	# fpath = "../result/matced_mwe_1130_mod.csv"
+	# output, matchspan, meaninglist = data(fpath, frg=1)
+	# countMeaning(list(set(meaninglist)))
+
 
 if __name__ == '__main__':
 	main()
