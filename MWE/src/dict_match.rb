@@ -13,7 +13,8 @@ MYDIC = "../result/tsutsuji_dic_20161128.json"	# 先頭の「う」と「ん」�
 CONST1="./const/const1_unidic.tsv"
 CONST2="./const/const2.tsv"
 
-RESULT="../result/matced_mwe_1201.csv"
+# RESULT="../result/matced_mwe_1201.csv"
+RESULT="../result/dev_matced_1202.csv"
 
 def getmwe(dict)
 	mwelist = Array.new()
@@ -247,12 +248,16 @@ def main()
 	# p mwelist.length		# 3717
 
 	# 辞書for文
-		for type in ["train", "test", "dev"] do
-			pathtocorp = "../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
-			outdata = proc(pathtocorp, mwelist, consthash, outdata)
-		end
+		# for type in ["train", "test", "dev"] do
+		# 	pathtocorp = "../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
+		# 	outdata = proc(pathtocorp, mwelist, consthash, outdata)
+		# end
+
+	# devの飲みを対象に
+	pathtocorp = "../data/20161007/corpus/ud/ja_ktc-ud-dev-merged.conll"
+	outdata = proc(pathtocorp, mwelist, consthash, outdata)
 	# csv書き込み
-	# writeCSV(RESULT, outdata)
+	writeCSV(RESULT, outdata)
 end
 
 main()

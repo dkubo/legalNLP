@@ -136,27 +136,93 @@ def checkSamespan(output2, matchspan2):
 			for span in v:
 				outdata += output2[(sentid, span, posid)]
 
-	print(needed_meaninglist)
-	print(len(needed_meaninglist))
+	# print(needed_meaninglist)
+	# print(len(needed_meaninglist))
 	return outdata
 
+def sortMWE(outdata):
+	outdata.sort(key=lambda x:x[5])	# mweでsort
+	return outdata
+
+def groupingMWE(outdata):
+	newoutdata, grouplist = [], []
+	premwe,curmwe = "", ""
+
+	for i, token in enumerate(outdata):
+		curmwe = token[5]
+		if i == 0:
+			premwe = token[5]
+
+		if premwe == curmwe:
+			grouplist.append(token)
+		else:
+			newoutdata.append(grouplist)
+			grouplist = []
+			grouplist.append(token)
+
+		premwe = copy.deepcopy(curmwe)
+	newoutdata.append(grouplist)
+	return newoutdata
+
+def dictShape(posmean):
+	outstring, num = "", 1
+	for mweid, meanings in posmean.items():
+		posid = mweid[-3]	# mweid: str
+		meanings = re.sub(r'(\[|\'|\'|\]|\s)',"", meanings[0]).split(",")
+		for meaning in meanings:
+			outstring += str(num)+"=>"+posid+":"+meaning+","
+			num += 1
+	return outstring[0:-1]
+
+
+def collectMWEID(outdata):
+	newoutdata = []
+	for group in outdata:
+		samesentspan = defaultdict(list)
+		for token in group:
+			samesentspan[(token[1],token[2],token[3])].append(token)	# sentid, begin, end
+
+		for key, tokens in samesentspan.items():
+			posmean = defaultdict(list)
+			newtoken, mweids = [], []
+			for token in tokens:
+				if len(token) == 1:
+					newoutdata.append(token[1:])
+					break
+				else:
+					newtoken = token[1:-1]	# except for meanings
+					mweids.append(token[0])
+					posmean[token[0]].append(token[-1])
+			# newtoken.insert(0, ','.join(mweids))
+			posmean = dictShape(posmean)
+			newtoken.append(posmean)
+			newoutdata.append(newtoken)
+
+	return newoutdata
+
 def main():
-	fpath1 = "../result/matced_mwe_1201.csv"
-	outpath1 = "../result/matced_mwe_1201_mod.csv"
-
-	# output, matchspan, meaninglist = data(fpath1, frg=0)
-	# outdata = checkSamespan(output, matchspan)
-	# writeCSV(outpath1, outdata)
-
-
-	outpath2 = "../result/matced_mwe_1201_rmoneword.csv"
-	output, matchspan, meaninglist = data(outpath1, frg=1)
-	outdata = removeIreko(output, matchspan)
-	# writeCSV(outpath2, outdata)
-
-	# fpath = "../result/matced_mwe_1130_mod.csv"
 	# output, matchspan, meaninglist = data(fpath, frg=1)
 	# countMeaning(list(set(meaninglist)))
+
+	fpath1 = "../result/dev_matced_1202.csv"
+	outpath1 = "../result/dev_matced_1202_buf.tsv"
+
+	output, matchspan, meaninglist = data(fpath1, frg=0)
+	outdata = checkSamespan(output, matchspan)
+	writeCSV(outpath1, outdata)
+
+
+	output, matchspan, meaninglist = data(outpath1, frg=1)
+	outdata = removeIreko(output, matchspan)
+	outdata = sortMWE(outdata)
+	outdata = groupingMWE(outdata)
+	outdata = collectMWEID(outdata)
+
+	outpath2 = "../result/dev_matced_1202_rmoneword.tsv"
+	writeCSV(outpath2, outdata)
+
+
+
 
 
 if __name__ == '__main__':
