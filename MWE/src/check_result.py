@@ -172,11 +172,13 @@ def dictShape(posmean):
 		for meaning in meanings:
 			outstring += str(num)+"=>"+posid+":"+meaning+","
 			num += 1
-	return outstring[0:-1]
+	# return outstring[0:-1]
+	return outstring+"0=>その他"
 
 
 def collectMWEID(outdata):
 	newoutdata = []
+	forus = []
 	for group in outdata:
 		samesentspan = defaultdict(list)
 		for token in group:
@@ -188,17 +190,21 @@ def collectMWEID(outdata):
 			for token in tokens:
 				if len(token) == 1:
 					newoutdata.append(token[1:])
+					forus.append(token)
 					break
 				else:
-					newtoken = token[1:-1]	# except for meanings
+					newtoken, newtoken2 = token[1:-1], token[0:-1]
 					mweids.append(token[0])
 					posmean[token[0]].append(token[-1])
-			# newtoken.insert(0, ','.join(mweids))
+
+			newtoken2.append(posmean)
 			posmean = dictShape(posmean)
 			newtoken.append(posmean)
-			newoutdata.append(newtoken)
 
-	return newoutdata
+			newoutdata.append(newtoken)
+			forus.append(newtoken2)
+
+	return newoutdata, forus
 
 def main():
 	# output, matchspan, meaninglist = data(fpath, frg=1)
@@ -216,10 +222,12 @@ def main():
 	outdata = removeIreko(output, matchspan)
 	outdata = sortMWE(outdata)
 	outdata = groupingMWE(outdata)
-	outdata = collectMWEID(outdata)
+	outdata, forme = collectMWEID(outdata)
 
 	outpath2 = "../result/dev_matced_1202_rmoneword.tsv"
-	writeCSV(outpath2, outdata)
+	internal = "../result/dev_matced_1202_rmoneword_naibu.tsv"
+	# writeCSV(outpath2, outdata)
+	writeCSV(internal, forme)
 
 
 
