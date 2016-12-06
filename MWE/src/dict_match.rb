@@ -9,30 +9,29 @@ require 'csv'
 
 # for ITC
 TSUTUJI = "../data/20161007/dic/tsutsuji/tsutsuji-1.1/L9_utf8.list"
-MYDIC = "../result/tsutsuji_dic_20161128.json"	# 先頭の「う」と「ん」を削除、ハイフン処理をした辞書
+MYDIC = "../result/tsutsuji_dic_20161206.json"	# 先頭の「う」と「ん」を削除、ハイフン処理をした辞書
+
 CONST1="./const/const1_unidic.tsv"
 CONST2="./const/const2.tsv"
-
-# RESULT="../result/matced_mwe_1201.csv"
-RESULT="../result/dev_matced_1202.csv"
 
 def getmwe(dict)
 	mwelist = Array.new()
 	data_hash = JSON.parse(File.read(dict))
 
+	suwcnt, varicnt = 0, 0
 	data_hash.each{|mweid, value|
-		if value["suw_lemma"].length >= 2
-			mwelist.push([mweid, value["suw_lemma"], value["left"], value["meaning"]])
-		end
+		suwcnt += 1
+		# mwelist.push([mweid, value["suw_lemma"], value["left"], value["meaning"]])
+		mwelist.push([mweid, value["suw_lemma"], value["left"]])
 
 		for mwe in value["variation_lemma"]
-			if mwe.length >= 2
-				mwelist.push([mweid, mwe, value["left"], value["meaning"]])
-			end
+			varicnt += 1
+			# mwelist.push([mweid, mwe, value["left"], value["meaning"]])
+			mwelist.push([mweid, mwe, value["left"]])
 		end
 	}
-
 	mwelist.uniq!
+
 	return mwelist
 end
 
@@ -144,7 +143,8 @@ def	writeCSV(fname, outdata)
 	file.close
 end
 
-def matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash, outdata)
+# def matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash, outdata)
+def matching(mweid, mwe, leftconst, s_id, sentence, lemma, sentpos, consthash, outdata)
 	m_frg, leftconst, totallen = 0, leftconst[0].scan(/.{1,2}/), 0
 
 	lemma.each_with_index do |lempart, idx|  	# sentence loop
@@ -177,7 +177,8 @@ def matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, con
 				# p "postcont:", postcont
 				# p "meaning:", meaning
 				# p startlen, endlen
-				outdata.push([mweid, s_id, startlen.to_s, endlen.to_s, precont, matched, postcont, meaning])	# startlen, endlen: 標準形の文に対してのもの
+				outdata.push([mweid, s_id, startlen.to_s, endlen.to_s, precont, matched, postcont])	# startlen, endlen: 標準形の文に対してのもの
+				# outdata.push([mweid, s_id, startlen.to_s, endlen.to_s, precont, matched, postcont, meaning])	# startlen, endlen: 標準形の文に対してのもの
 				m_frg = 0
 			end
 		end
@@ -228,36 +229,34 @@ def proc(pathtocorp, mwelist, consthash, outdata)
 
 	sent_hash.each{|s_id, v|
 		sentence, lemma, sentpos = makeArray(v)
-		mwelist.each{|mweid, mwe, leftconst, meaning|
-			next if mwe.join().length == 1
-			outdata = matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash, outdata)
+		mwelist.each{|mweid, mwe, leftconst|
+			p mwe if mwe.length <= 1
+		# mwelist.each{|mweid, mwe, leftconst, meaning|
+			outdata = matching(mweid, mwe, leftconst, s_id, sentence, lemma, sentpos, consthash, outdata)
+			# outdata = matching(mweid, mwe, leftconst, meaning, s_id, sentence, lemma, sentpos, consthash, outdata)
 		}
 	}
 	return outdata
 end
 
 def main()
-	outdata = []
-	# $outdata = []		# global
-
 	# 制約のリスト取得
 	consthash = getConst()
 
 	# 各辞書からMWEのリストを取得
 	mwelist = getmwe(MYDIC)	# [[mweid, mwe, leftconst, meaning], [], ...]
-	# p mwelist.length		# 3717
+	# p mwelist.length		# 3609
 
 	# 辞書for文
-		# for type in ["train", "test", "dev"] do
-		# 	pathtocorp = "../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
-		# 	outdata = proc(pathtocorp, mwelist, consthash, outdata)
-		# end
+	for type in ["train", "test", "dev"] do
+		outdata = []
+		pathtocorp = "../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
+		outdata = proc(pathtocorp, mwelist, consthash, outdata)
+		result = "../result/matced_#{type}_1206.csv"
+		# csv書き込み
+		# writeCSV(result, outdata)
+	end
 
-	# devの飲みを対象に
-	pathtocorp = "../data/20161007/corpus/ud/ja_ktc-ud-dev-merged.conll"
-	outdata = proc(pathtocorp, mwelist, consthash, outdata)
-	# csv書き込み
-	writeCSV(RESULT, outdata)
 end
 
 main()

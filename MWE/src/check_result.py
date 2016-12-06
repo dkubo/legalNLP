@@ -9,29 +9,38 @@ import re
 # マッチMWEの種類数カウント
 
 def data(fpath, frg):
-	meaninglist, matchspan, output = [], defaultdict(list), defaultdict(list)
+	matchspan, output = defaultdict(list), defaultdict(list)
+	# meaninglist, matchspan, output = [], defaultdict(list), defaultdict(list)
 
 	with open(fpath, "r") as f:
 		for line in f:
 			if frg == 0:
-				mweid, sentid, b, e, pre, mwe, post, meaning = line.rstrip().split(",")
-				b, e, mweid, meaning = int(b), int(e), [mweid], [meaning]
-				output[(sentid, (b,e), mweid[0][-1])].append([mweid, sentid, b, e, pre, mwe, post, meaning])
+				mweid, sentid, b, e, pre, mwe, post = line.rstrip().split(",")
+				# mweid, sentid, b, e, pre, mwe, post, meaning = line.rstrip().split(",")
+				b, e, mweid = int(b), int(e), [mweid]
+				# b, e, mweid, meaning = int(b), int(e), [mweid], [meaning]
+				output[(sentid, (b,e), mweid[0][-1])].append([mweid, sentid, b, e, pre, mwe, post])
+				# output[(sentid, (b,e), mweid[0][-1])].append([mweid, sentid, b, e, pre, mwe, post, meaning])
 				matchspan[sentid, mweid[0][-1]].append((b,e))
-				meaninglist.append(meaning)
+				# meaninglist.append(meaning)
 			else:
-				mweid, sentid, b, e, pre, mwe, post, meaning = line.rstrip().split("\t")
-				b, e, mweid, meaning = int(b), int(e), mweid, meaning
-				output[(sentid, (b,e), mweid)].append([mweid, sentid, b, e, pre, mwe, post, meaning])
+				mweid, sentid, b, e, pre, mwe, post = line.rstrip().split("\t")
+				# mweid, sentid, b, e, pre, mwe, post, meaning = line.rstrip().split("\t")
+				b, e, mweid = int(b), int(e), mweid
+				# b, e, mweid, meaning = int(b), int(e), mweid, meaning
+				output[(sentid, (b,e), mweid)].append([mweid, sentid, b, e, pre, mwe, post])
+				# output[(sentid, (b,e), mweid)].append([mweid, sentid, b, e, pre, mwe, post, meaning])
 				matchspan[sentid, mweid].append((b,e))
-				meaninglist.append(meaning)
-	return output, matchspan, meaninglist
+				# meaninglist.append(meaning)
+	# return output, matchspan, meaninglist
+	return output, matchspan
 
 
-def writeCSV(MOD_RESULT, outdata):
-	# '\t'.join([str(i) for i in outdata])
+def writeCSV(MOD_RESULT, outdata, last=0):
 	with open(MOD_RESULT, 'w') as f:
 		writer = csv.writer(f, lineterminator='\n', delimiter = '\t')
+		if last == 1:
+			writer.writerows([["文ID", "開始位置", "終了位置", "前文脈", "注釈該当部", "後文脈", "品詞カテゴリ"]])
 		writer.writerows(outdata)
 
 def countMeaning(meaninglist):
@@ -122,8 +131,8 @@ def	collectMeaning(sentid, posid, samespans, output2, outdata, needed_meaninglis
 	return needed_meaninglist
 
 def checkSamespan(output2, matchspan2):
-	outdata, needed_meaninglist = [], []	# インストラクションが必要な意味カテゴリのリスト用
-
+	outdata = []
+	# outdata, needed_meaninglist = [], []	# インストラクションが必要な意味カテゴリのリスト用
 	for k, v in matchspan2.items():
 		sentid, posid = k
 		samespans = extractSamespan(v)
@@ -131,7 +140,7 @@ def checkSamespan(output2, matchspan2):
 		if samespans != []:		# スパンに重複がある場合
 			for span in v:
 				outdata += output2[(sentid, span, posid)]
-			needed_meaninglist = collectMeaning(sentid, posid, samespans, output2, outdata, needed_meaninglist)
+			# needed_meaninglist = collectMeaning(sentid, posid, samespans, output2, outdata, needed_meaninglist)
 		else:
 			for span in v:
 				outdata += output2[(sentid, span, posid)]
@@ -166,14 +175,16 @@ def groupingMWE(outdata):
 
 def dictShape(posmean):
 	outstring, num = "", 1
-	for mweid, meanings in posmean.items():
+
+	for mweid, _ in posmean.items():
+	# for mweid, meanings in posmean.items():
 		posid = mweid[-3]	# mweid: str
-		meanings = re.sub(r'(\[|\'|\'|\]|\s)',"", meanings[0]).split(",")
-		for meaning in meanings:
-			outstring += str(num)+"=>"+posid+":"+meaning+","
-			num += 1
-	# return outstring[0:-1]
-	return outstring+"0=>その他"
+		# meanings = re.sub(r'(\[|\'|\'|\]|\s)',"", meanings[0]).split(",")
+		# for meaning in meanings:
+			# outstring += str(num)+"=>"+posid+":"+meaning+","
+		outstring += str(num)+"=>"+posid+","
+	return outstring[0:-1]
+	# return outstring+"0=>その他"
 
 
 def collectMWEID(outdata):
@@ -193,7 +204,8 @@ def collectMWEID(outdata):
 					forus.append(token)
 					break
 				else:
-					newtoken, newtoken2 = token[1:-1], token[0:-1]
+					newtoken, newtoken2 = token[1:], token[0:]
+					# newtoken, newtoken2 = token[1:-1], token[0:-1]
 					mweids.append(token[0])
 					posmean[token[0]].append(token[-1])
 
@@ -210,28 +222,29 @@ def main():
 	# output, matchspan, meaninglist = data(fpath, frg=1)
 	# countMeaning(list(set(meaninglist)))
 
-	fpath1 = "../result/dev_matced_1202.csv"
-	outpath1 = "../result/dev_matced_1202_buf.tsv"
+	for ftype in ["train", "test", "dev"]:
+		outdata = []
 
-	output, matchspan, meaninglist = data(fpath1, frg=0)
-	outdata = checkSamespan(output, matchspan)
-	writeCSV(outpath1, outdata)
+		fpath1 = "../result/matced_{}_1206.csv".format(ftype)
+		outpath1 = "../result/matced_{}_1206_buf.tsv".format(ftype)
 
-
-	output, matchspan, meaninglist = data(outpath1, frg=1)
-	outdata = removeIreko(output, matchspan)
-	outdata = sortMWE(outdata)
-	outdata = groupingMWE(outdata)
-	outdata, forme = collectMWEID(outdata)
-
-	outpath2 = "../result/dev_matced_1202_rmoneword.tsv"
-	internal = "../result/dev_matced_1202_rmoneword_naibu.tsv"
-	# writeCSV(outpath2, outdata)
-	writeCSV(internal, forme)
+		output, matchspan = data(fpath1, frg=0)
+		# output, matchspan, meaninglist = data(fpath1, frg=0)
+		outdata = checkSamespan(output, matchspan)
+		writeCSV(outpath1, outdata)
 
 
+		output, matchspan = data(outpath1, frg=1)
+		# output, matchspan, meaninglist = data(outpath1, frg=1)
+		outdata = removeIreko(output, matchspan)
+		outdata = sortMWE(outdata)
+		outdata = groupingMWE(outdata)
+		outdata, forme = collectMWEID(outdata)
 
-
+		outpath2 = "../result/matced_{}_1206_rmoneword.tsv".format(ftype)
+		internal = "../result/matced_{}_1206_rmoneword_naibu.tsv".format(ftype)
+		writeCSV(outpath2, outdata, last=1)
+		writeCSV(internal, forme)
 
 if __name__ == '__main__':
 	main()

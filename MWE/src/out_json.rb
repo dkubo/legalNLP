@@ -22,7 +22,8 @@ TSUTSUJI = HOME + "/data/20161007/dic/tsutsuji/tsutsuji-1.1/tsutsuji1.1_utf8_edi
 
 CONST1="./const/const1_unidic.tsv"
 CONST2="./const/const2.tsv"
-RESULT_DIC="../result/tsutsuji_dic_20161121.json"
+
+RESULT_DIC="../result/tsutsuji_dic_20161206.json"
 
 def parsing_coma(mwe)
 	luw_list = []
@@ -40,7 +41,6 @@ def parsing_coma(mwe)
 	}
 	return luw_list, yomi_list, luw_pos
 end
-
 
 def getdict(fname)
 	if fname == COMAINU
@@ -69,7 +69,11 @@ def parsing_mecab(nm, mwe)
 		suw_lem_pos.push(pos) unless n.surface == ""
 	end
 	suw_lem = checkHyphen(suw_lem)
-	return suw_lem, suw_lem_yomi, suw_lem_pos
+	if suw_lem.length >= 2
+		return suw_lem, suw_lem_yomi, suw_lem_pos
+	else
+		return nil, nil, nil
+	end
 end
 
 # unidicでの解析結果にハイフンが含まれる場合がある⇒対処
@@ -170,37 +174,42 @@ def main()
 			# sig_list[left]["LEFT"].push(entry)
 			pos_id = getAttribute(l3, "L3ID")
 			l3id = getAttribute(l3, "L1to3ID")
-			l_hash["headword"], l_hash["global_pos"], l_hash["meaning"] = entry, pos_hash[pos_id], meaning
-			l_hash["suw_lemma"], l_hash["suw_lemma_yomi"], l_hash["suw_lemma_pos"] = parsing_mecab(nm, l_hash["headword"])
-			p l_hash["suw_lemma"] if /-/ =~ l_hash["suw_lemma"].join()
-			l_hash["variation"], l_hash["variation_lemma"], l_hash["left"], l_hash["right"] = [], [], [], []
-			l_hash["left"].push(left)
+			suw_lemma, suw_lemma_yomi, suw_lemma_pos = parsing_mecab(nm, entry)
+			if suw_lemma != nil
+				l_hash["suw_lemma"], l_hash["suw_lemma_yomi"], l_hash["suw_lemma_pos"] = suw_lemma, suw_lemma_yomi, suw_lemma_pos
+				l_hash["headword"], l_hash["global_pos"], l_hash["meaning"] = entry, pos_hash[pos_id], meaning
 
-			l3.xpath('.//L7').each{|l7|
-				right = getAttribute(l7, "RIGHT")
-				l_hash["right"].push(right)
-				# sig_list[right] = {"#{right[0]}" => "", "#{right[1]}" => "", "LEFT"=>[], "RIGHT"=>[]} unless sig_list[right] != nil
-				# constPush(sig_list, right, consthash)
+				l_hash["variation"], l_hash["variation_lemma"], l_hash["left"] = [], [], []
+				# l_hash["variation"], l_hash["variation_lemma"], l_hash["left"], l_hash["right"] = [], [], [], []
+				l_hash["left"].push(left)
 
-				l7.xpath('.//L9').each{|l9|
-					variation = l9.text.delete(".\s\n")
-					# sig_list[right]["RIGHT"].push(variation)
-					if variation != entry
-						l_hash["variation"].push(variation)
-						v_suw_lem, _, _ = parsing_mecab(nm, variation)
-						p v_suw_lem if /-/ =~ v_suw_lem.join()
-						l_hash["variation_lemma"].push(v_suw_lem) unless v_suw_lem == nil
-					end
+				l3.xpath('.//L7').each{|l7|
+					# right = getAttribute(l7, "RIGHT")
+					# l_hash["right"].push(right)
+					# sig_list[right] = {"#{right[0]}" => "", "#{right[1]}" => "", "LEFT"=>[], "RIGHT"=>[]} unless sig_list[right] != nil
+					# constPush(sig_list, right, consthash)
+
+					l7.xpath('.//L9').each{|l9|
+						variation = l9.text.delete(".\s\n")
+						# sig_list[right]["RIGHT"].push(variation)
+						if variation != entry
+							l_hash["variation"].push(variation)
+							v_suw_lem, _, _ = parsing_mecab(nm, variation)
+							if v_suw_lem != nil
+								l_hash["variation_lemma"].push(v_suw_lem) unless v_suw_lem == nil
+							end
+						end
+					}
+					# sig_list[right]["RIGHT"].uniq!
 				}
-				# sig_list[right]["RIGHT"].uniq!
-			}
-			# sig_list[left]["LEFT"].uniq!
-			l_hash["right"].uniq!
-			l_hash["left"].uniq!
-			l_hash["variation"].uniq!
-			l_hash["variation_lemma"].uniq!
+				# sig_list[left]["LEFT"].uniq!
+				# l_hash["right"].uniq!
+				l_hash["left"].uniq!
+				l_hash["variation"].uniq!
+				l_hash["variation_lemma"].uniq!
 
-			g_hash[l3id] = l_hash
+				g_hash[l3id] = l_hash
+			end
 		}
 	}
 
