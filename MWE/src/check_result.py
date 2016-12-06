@@ -183,6 +183,7 @@ def dictShape(posmean):
 		# for meaning in meanings:
 			# outstring += str(num)+"=>"+posid+":"+meaning+","
 		outstring += str(num)+"=>"+posid+","
+		num += 1
 	return outstring[0:-1]
 	# return outstring+"0=>その他"
 
