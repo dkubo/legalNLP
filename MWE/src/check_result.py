@@ -184,8 +184,7 @@ def dictShape(posmean):
 			# outstring += str(num)+"=>"+posid+":"+meaning+","
 		outstring += str(num)+"=>"+posid+","
 		num += 1
-	return outstring[0:-1]
-	# return outstring+"0=>その他"
+	return outstring+"0=>その他"
 
 
 def collectMWEID(outdata):
