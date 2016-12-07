@@ -176,8 +176,8 @@ def main()
 			l3id = getAttribute(l3, "L1to3ID")
 			suw_lemma, suw_lemma_yomi, suw_lemma_pos = parsing_mecab(nm, entry)
 			if suw_lemma != nil
-				l_hash["suw_lemma"], l_hash["suw_lemma_yomi"], l_hash["suw_lemma_pos"] = suw_lemma, suw_lemma_yomi, suw_lemma_pos
 				l_hash["headword"], l_hash["global_pos"], l_hash["meaning"] = entry, pos_hash[pos_id], meaning
+				l_hash["suw_lemma"], l_hash["suw_lemma_yomi"], l_hash["suw_lemma_pos"] = suw_lemma, suw_lemma_yomi, suw_lemma_pos
 
 				l_hash["variation"], l_hash["variation_lemma"], l_hash["left"] = [], [], []
 				# l_hash["variation"], l_hash["variation_lemma"], l_hash["left"], l_hash["right"] = [], [], [], []
