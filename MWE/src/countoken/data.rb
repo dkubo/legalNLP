@@ -99,7 +99,7 @@ class ProcData
 					sentence.push(syojisyutu)
 					sentpos.push([pos, katuyogata, katuyokei])
 				else
-					lasthash[sentid] = [sentence, lemmasent, sentpos]
+					lasthash[sentid.to_s] = [sentence, lemmasent, sentpos]
 					sentid += 1
 					lemmasent = [lemma]
 					sentence = [syojisyutu]

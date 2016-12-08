@@ -4,6 +4,7 @@ from collections import defaultdict, Counter
 import csv
 import copy
 import re
+import sys
 
 # マッチスパンが入れ子or 包含になっているものを確認
 # マッチMWEの種類数カウント
@@ -218,33 +219,46 @@ def collectMWEID(outdata):
 
 	return newoutdata, forus
 
+def proc(fpath1, outpath1, outpath2, internal):
+	output, matchspan = data(fpath1, frg=0)
+	# output, matchspan, meaninglist = data(fpath1, frg=0)
+	outdata = checkSamespan(output, matchspan)
+	writeCSV(outpath1, outdata)
+
+
+	output, matchspan = data(outpath1, frg=1)
+	# output, matchspan, meaninglist = data(outpath1, frg=1)
+	outdata = removeIreko(output, matchspan)
+	outdata = sortMWE(outdata)
+	outdata = groupingMWE(outdata)
+	outdata, forme = collectMWEID(outdata)
+
+	writeCSV(outpath2, outdata, last=1)
+	writeCSV(internal, forme)
+
 def main():
+	args = sys.argv
+
 	# output, matchspan, meaninglist = data(fpath, frg=1)
 	# countMeaning(list(set(meaninglist)))
+	if args[1] == "-ud":
+		for ftype in ["train", "test", "dev"]:
+			fpath1 = "../../result/ud/matced_{}_1206.csv".format(ftype)
+			outpath1 = "../../result/ud/matced_{}_1206_buf.tsv".format(ftype)
+			outpath2 = "../../result/ud/matced_{}_1206_rmoneword.tsv".format(ftype)
+			internal = "../../result/ud/matced_{}_1206_rmoneword_naibu.tsv".format(ftype)
+			proc(fpath1, outpath1, outpath2, internal)
 
-	for ftype in ["train", "test", "dev"]:
-		outdata = []
-
-		fpath1 = "../../result/matced_{}_1206.csv".format(ftype)
-		outpath1 = "../../result/matced_{}_1206_buf.tsv".format(ftype)
-
-		output, matchspan = data(fpath1, frg=0)
-		# output, matchspan, meaninglist = data(fpath1, frg=0)
-		outdata = checkSamespan(output, matchspan)
-		writeCSV(outpath1, outdata)
+	elif args[1] == "-bccwj":
+		fpath1 = "../../result/bccwj/bccwj_matced_1208.csv"
+		outpath1 = "../../result/bccwj/bccwj_matced_1208_buf.tsv"
+		outpath2 = "../../result/ud/bccwj_matced_1208_rmoneword.tsv"
+		internal = "../../result/ud/bccwj_matced_1208_rmoneword_naibu.tsv"
+		proc(fpath1, outpath1, outpath2, internal)
 
 
-		output, matchspan = data(outpath1, frg=1)
-		# output, matchspan, meaninglist = data(outpath1, frg=1)
-		outdata = removeIreko(output, matchspan)
-		outdata = sortMWE(outdata)
-		outdata = groupingMWE(outdata)
-		outdata, forme = collectMWEID(outdata)
 
-		outpath2 = "../../result/matced_{}_1206_rmoneword.tsv".format(ftype)
-		internal = "../../result/matced_{}_1206_rmoneword_naibu.tsv".format(ftype)
-		writeCSV(outpath2, outdata, last=1)
-		writeCSV(internal, forme)
+
 
 if __name__ == '__main__':
 	main()
