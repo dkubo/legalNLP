@@ -25,7 +25,12 @@ def getMWEID(todict):
 def shape(matchedList):
 	poslist, outstring = defaultdict(list), ""
 	for i in matchedList:
-		poslist[i[-1]].append(i)
+		if i[-1] in ["P", "T", "W", "N"]:
+			poslist["P"].append(i)
+		elif i[-1] in ["Q", "C"]:
+			poslist["C"].append(i)
+		else:
+			poslist[i[-1]].append(i)
 
 	for num, (pos, ids) in enumerate(poslist.items()):
 		outstring += str(num+1) + "=>" + pos + ","
@@ -61,7 +66,7 @@ def main():
 	# resultpath = "../result/dev_matced_1202_rmoneword_naibu.tsv"
 	todict = "../../result/tsutsuji_dic_20161206.json"
 	resultpath = "../../result/ud/matced_dev_1206_rmoneword_naibu.tsv"
-	outpath = "./tmp.tsv"
+	outpath = "./ud_annotation_dev_1208.tsv"
 
 	mweidlist = getMWEID(todict)
 	result = extract(mweidlist, resultpath)
