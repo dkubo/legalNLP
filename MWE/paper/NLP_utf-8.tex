@@ -1,0 +1,108 @@
+\documentclass[twocolumn]{jarticle}
+ 
+\usepackage{NLP_utf-8}
+\usepackage{indentfirst}
+% セクションの文字サイズ, 間隔変更
+\makeatletter
+\def\section{\@startsection {section}{1}{\z@}{-1.5ex plus -1ex minus 
+-.2ex}{1.3ex plus .2ex}{\large\bf}}
+\def\subsection{\@startsection {subsection}{1}{\z@}{-1.5ex plus -1ex minus 
+-.2ex}{1.3ex plus .2ex}{\normalsize\bf}}
+\makeatother
+
+\title{\textbf{日本語Universal Dependenciesへの複合辞のアノテーション}}
+
+\setcounter{footnote}{1}
+\author{
+\begin{tabular}{c@{\ \ \ }cc}
+久保 大輝† &
+\begin{minipage}{8.3zw}
+    田中 貴秋‡
+\end{minipage} &
+進藤 裕之†　松本 裕治†\\[3pt]
+\multicolumn{3}{c}{†奈良先端科学技術大学院大学 情報科学研究科} \\
+\multicolumn{3}{c}{‡NTT コミュニケーション科学基礎研究所} \\
+\vspace{-4ex}
+\end{tabular}}
+\date{\texttt{†\{kubo.daiki.kz7, shindo, matsu\}@is.naist.jp} \\
+	  \texttt{‡tanaka.takaaki@lab.ntt.co.jp}}
+
+\begin{document}
+\maketitle
+\section{はじめに}
+機能表現とは，1つの形態素からなる「機能語」と，複数の形態素から構成され，全体として機能的に働く「複合辞」からなり，機能表現の中でも「にあたって」，「について」のような表現に代表される「複合辞」においては，同一の表記で内容的な意味を持つ場合と機能的意味を持つ場合がある．例えば，以下の文1と文2には「について」という同一表記の表現が現れているが，文1では動詞「つく」という内容的な働きをしており，文2では「について」が1つの表現として機能的な働きをしている．
+\begin{enumerate}
+	\item 親\underline{について}歩く	\hspace{15.4mm}(内容的用法)
+	\item 研究\underline{について}話す	\hspace{10mm}（機能的用法）
+\end{enumerate}
+このような表現おいて，同一表記で内容的な用法の場合と機能的な用法の場合を識別する必要があり，そのためには，複合辞の辞書および，複合辞の用法を注釈付けした言語資源の整備は不可欠である．言語資源の1つに，Universal Dependencies(UD)\cite{UD, {Ryan}, {ja_UD}}がある．UDは，言語横断的な係り受け構造を設計する試みであり，2015年には京都大学テキストコーパス\cite{KTC}を基にした日本語UDが公開された．UDには，単語単位の依存構造を採用しており，依存構造のラベルとして複合辞に相当する{\em mwe}が定義されているものの，日本語UDにおいてはルールベースによって{\em mwe}のラベル付けがされており正確なものではない．において，
+
+本稿では，日本語機能表現辞書「つつじ」をもとに，UDのための新たな機能表現辞書を構築し，その辞書を用いて人手による日本語UDへのアノテーションを実施した結果について報告する．
+
+\section{日本語機能表現辞書「つつじ」}
+現在，無料で公開されている機能表現の電子化辞書として，日本語機能表現辞書つつじ(以下，つつじ)\cite{Tsutsuji}がある．つつじは言語学的文献を参考にして得た見出し語341件について種々の異形を考慮した，全16,801種類の機能表現が収録され，9つの階層構造で見出し語，意味，文法的機能，機能語の交替，音韻的変化，とりたて詞の挿入，活用，「です/ます」の有無，表記の異なりを表現している辞書である．
+
+\section{辞書の構築}
+本節では，機能表現辞書つつじをもとに構築した新たな機能表現辞書の詳細について述べる．本辞書は，各々の見出し語は唯一の機能を持つという方針をとるため，つつじの第3階層における555語を見出し語とする．
+
+	\subsection{機能表現の定義}
+	つつじにおいて機能表現とは，「機能語」と「複合辞」からなる表現と定義されている．しかし，本研究は複合辞にのみ焦点を当てているため，機能表現を構成する表現は「複合辞」のみであると定義し，つつじにおける機能語を全て除去する．この結果，エントリ数の数は，また，機能表現の構文的な働きについての定義は，つつじの定義に則る．
+
+	\subsection{品詞体系の変換}
+	% # UniDicが事実上の標準となっていることが本当に言えるのか？？
+	機能表現の前後形態素の品詞・活用形等の制約が，つつじにおいてIPADicの体系で定義がされている．しかし，
+	本研究でアノテート対象のコーパスである日本語UDや，日本語の代表的な言語資源である「現代日本語書き言葉均衡コーパス」(BCCWJ)においては，UniDic\cite{UniDic}の体系を採用しており，UniDicは単語の最小単位の事実上の標準となっている．今後，本辞書を広く使用してもらうためにも，我々はつつじの前後接続制約をIPADicからUniDic体系への対応付けを実施した．
+
+	\subsection{エントリの追加}
+
+\section{日本語UDへのアノテーション}
+
+	\subsection{機能表現のマッピング}
+
+	\subsection{アノテーションの方針}
+	表記の用法判定
+
+\section{コーパスの分析}
+
+\section{関連研究}
+複合辞がアノテートされたコーパスは，BCCWJにおいては，助詞相当75語，助動詞55語の複合辞が収録されている．また，現代語複合辞用例集\cite{gendai_mwe}の代表的複合辞一覧に基づいて，それらの派生形である337種類の機能表現を規定し，1995年の毎日新聞の記事に対して内容的用法と機能的用法の区別をアノテートし，各複合辞ごとに最大50件の用例を収録した「日本語複合辞用例データベース」\cite{MUST1}や，つつじで定義されている意味体系を再構成した116種類の意味ラベルを定義し，BCCWJのYahoo!知恵袋ドメインの一部における各文の述部に付随する機能表現を対象にラベルを付与したコーパス\cite{ja_FEcorp}がある．
+% ・解析系
+% 用例データベース\cite{MUST1}を学習データとして，機械学習を用いて機能表現の用法判定・係り受け解析を行う手法\cite{Tsuchiya_parse，{Shime_parse}}や，機能表現辞書つつじ\cite{Tsutsuji}の階層における下位の表現に対して，用例が類似する上位の表現を参照することで用法判定を行う手法\cite{Suzuki_parse, {Nagasaka_parse}}，
+% \cite{Kobayakawa_parse}
+% 放送番組への反響の分析を行った．
+% \cite{Tsuchiya_corp}
+% 日本語複合辞用例データベースに収録されている337種類の機能表現を対象
+% 京都テキストコーパスに現れる全ての機能表現候補に判定ラベルを付与しているが，公開されていない
+% \cite{Suzuki_BCCWJ}
+% BCCWJにおいてCRFを用いたチャンキングによる複合辞の検出を行い，複合辞が一長単位を構成する場合，あるいは複数の長単位から構成される場合の曖昧性の解消を行った．
+% 機能表現を考慮した解析を行うことの優位性が見出せるような，公開されているアプリケーションは我々が探した限り存在しない．
+
+\section{おわりに}
+本稿では，
+
+
+% 参考文献
+\bibliographystyle{jplain}
+\begin{thebibliography}{99}
+\footnotesize{
+	\bibitem{UD}Universal Dependencies contributors. Universal dependencies. https://universaldependencies.github.io/docs/, 2014.
+	\bibitem{Ryan}Ryan T McDonald, Joakim Nivre, Yvonne QuirmbachBrundage, Yoav Goldberg, Dipanjan Das, Kuzman Ganchev, Keith B Hall, Slav Petrov, Hao Zhang, Oscar T¨ackstr¨om, et al. Universal dependency annotation for multilingual parsing. In ACL (2), pp. 92–97, 2013.
+	\bibitem{KTC}Daisuke Kawahara, Sadao Kurohashi, and Koiti Hasida.
+	Construction of a Japanese relevance-tagged corpus. In Proceedings of the 3rd International Conference on Language Resources and Evaluation (LREC2002), pp. 2008–2013, 2002.
+	\bibitem{gendai_mwe}国立国語研究所：現代語複合辞用例集 (2001)
+	% \bibitem{Tsuchiya_corp}土屋雅稔, 注連隆夫, 松吉俊, 宇津呂武仁, 佐藤理史, 中川聖一. 機能表現を考慮した日本語係り受け解析器学習のためのコーパス作成. 言語処理学会第13回年次大会, pp. 510-513. 2007.
+	% \bibitem{OpenMWE}橋本力, 河原大輔. 日本語慣用句コーパスの構築と慣用句曖昧性解消の試み. 情報処理学会研究報告自然言語処理(67), pp. 1-6, 2008.
+	\bibitem{Tsutsuji}松吉俊, 佐藤理史, 宇津呂武仁. 日本語機能表現辞書の編纂. 自然言語処理14(5), pp. 123-146, 2007.
+	\bibitem{Shime_parse}注連隆夫, 土屋雅稔, 松吉俊, 宇津呂武仁, 佐藤理史. 日本語機能表現の自動検出と統計的係り受け解析への応用. 自然言語処理14(5), pp. 167-197, 2007.
+	\bibitem{MUST1}土屋雅稔, 宇津呂武仁, 松吉俊, 佐藤理史, 中川聖一. 日本語複合辞用例データベースの作成と分析. 情報処理学会論文誌47(6), pp. 1728-1741, 2006.
+	\bibitem{Tsuchiya_parse}土屋雅稔, 注連隆夫, 高木俊宏, 内元清貴, 松吉俊, 宇津呂武仁, 佐藤理史, 中川聖一. 機械学習を用いた日本語機能表現のチャンキング. 自然言語処理14(1), pp. 111–138, 2007.
+	\bibitem{Kobayakawa_parse}小早川健, 関場治朗, 木下明徳, 熊野正, 加藤直人, 田中英輝. 単語格子とマルコフモデルによる日本語機能表現の解析: 日本語機能表現辞書 「つつじ」 を用いて (解析). 電子情報通信学会技術研究報告. NLC, 言語理解とコミュニケーション109(142), pp. 15-20, 2009.
+	\bibitem{Suzuki_parse}鈴木敬文, 宇津呂武仁, 松吉俊, 土屋雅稔. 代表・派生関係を利用した日本語機能表現の解析. 情報処理学会研究報告(2010-NL199-6), pp. 1-9, 2010.
+	\bibitem{Nagasaka_parse}長坂泰治, 宇津呂武仁, 土屋雅稔. 大規模日本語機能表現辞書の階層性を利用した機能表現検出. 言語処理学会第 14 回年次大会, pp. 837-840, 2008.
+	\bibitem{Suzuki_BCCWJ}鈴木敬文, 阿部佑亮, 宇津呂武仁, 松吉俊, 土屋雅稔. 『現代日本語書き言葉均衡コーパス』における複合辞の検出と評価, コーパス日本語学ワークショップ(2012), 2012.
+	\bibitem{ja_FEcorp}上岡裕大, 成田和弥, 水野淳太, 乾健太郎. 述部機能表現に対する意味ラベル付与. 情報処理学会研究報告 第216回自然言語処理研究会, pp. 1-9, 2014.
+	\bibitem{ja_UD}金山博, 宮尾祐介, 田中貴秋, 森信介, 浅原正幸, 植松すみれ. 日本語Universal Dependenciesの試案. 言語処理学会第21回年次大会, pp. 505-508, 2015.
+	\bibitem{UniDic}伝康晴, 小木曽智信, 小椋秀樹, 山田篤, 峯松信明, 内元清貴, 小磯花絵. コーパス日本語学のための言語資源：形態素解析用電子化辞書の開発とその応用. 日本語科学(22), pp.101-123, 2007.
+}
+\end{thebibliography}
+\end{document}

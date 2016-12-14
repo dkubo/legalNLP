@@ -23,24 +23,7 @@ TSUTSUJI = HOME + "/data/20161007/dic/tsutsuji/tsutsuji-1.1/tsutsuji1.1_utf8_edi
 CONST1="./const/const1_unidic.tsv"
 CONST2="./const/const2.tsv"
 
-RESULT_DIC="../result/tsutsuji_dic_20161206.json"
-
-def parsing_coma(mwe)
-	luw_list = []
-	yomi_list = []
-	luw_pos = []
-	command = "echo #{mwe} | comainu.pl plain2longout"
-	s = Open3.capture3(command)
-	std_out = s[0].split("\t")[1..-1]
-	std_out[-1] = std_out[-1].delete("\nEOS")
-	std_out = shaping(std_out)
-	std_out.each{|out|
-		luw_list.push(out[-1]) unless out[-1] == "*"
-		yomi_list.push(out[-3]) unless out[-3] == "*"
-		luw_pos.push(out[-6]) unless out[-6] == "*"
-	}
-	return luw_list, yomi_list, luw_pos
-end
+# RESULT_DIC="../result/tsutsuji_dic_20161206.json"
 
 def getdict(fname)
 	if fname == COMAINU
@@ -69,11 +52,7 @@ def parsing_mecab(nm, mwe)
 		suw_lem_pos.push(pos) unless n.surface == ""
 	end
 	suw_lem = checkHyphen(suw_lem)
-	if suw_lem.length >= 2
-		return suw_lem, suw_lem_yomi, suw_lem_pos
-	else
-		return nil, nil, nil
-	end
+	return suw_lem, suw_lem_yomi, suw_lem_pos
 end
 
 # unidicでの解析結果にハイフンが含まれる場合がある⇒対処
@@ -149,13 +128,18 @@ def constPush(sig_list, const, consthash)
 	return sig_list
 end
 
+def getpath()
+	return ARGV[0].chomp
+end
+
 ###########################
 # main
 ###########################
 def main()
+	todict = getpath()
 	nm = nm_init()
 	sig_list, g_hash = {}, {}
-	cnt, one_cnt, v_cnt = 0, 0, 0
+	s_cnt, s_one_cnt, v_cnt, v_one_cnt, v_cnt_2, v_cnt_3 = 0, 0, 0, 0, 0, 0
 	pos_hash = {"P"=>"格助詞型", "Q"=>"接続助詞型", "D"=>"連体助詞型", "C"=>"接続詞型", "M"=>"助動詞型", "N"=>"形式名詞型", "T"=>"とりたて詞型", "W"=>"提題助詞型"}
 	consthash = getConst()
 
@@ -175,7 +159,7 @@ def main()
 			pos_id = getAttribute(l3, "L3ID")
 			l3id = getAttribute(l3, "L1to3ID")
 			suw_lemma, suw_lemma_yomi, suw_lemma_pos = parsing_mecab(nm, entry)
-			if suw_lemma != nil
+			if suw_lemma.length != 1
 				l_hash["headword"], l_hash["global_pos"], l_hash["meaning"] = entry, pos_hash[pos_id], meaning
 				l_hash["suw_lemma"], l_hash["suw_lemma_yomi"], l_hash["suw_lemma_pos"] = suw_lemma, suw_lemma_yomi, suw_lemma_pos
 
@@ -183,38 +167,38 @@ def main()
 				# l_hash["variation"], l_hash["variation_lemma"], l_hash["left"], l_hash["right"] = [], [], [], []
 				l_hash["left"].push(left)
 
-				l3.xpath('.//L7').each{|l7|
+				# l3.xpath('.//L7').each{|l7|
 					# right = getAttribute(l7, "RIGHT")
 					# l_hash["right"].push(right)
 					# sig_list[right] = {"#{right[0]}" => "", "#{right[1]}" => "", "LEFT"=>[], "RIGHT"=>[]} unless sig_list[right] != nil
 					# constPush(sig_list, right, consthash)
 
-					l7.xpath('.//L9').each{|l9|
-						variation = l9.text.delete(".\s\n")
-						# sig_list[right]["RIGHT"].push(variation)
-						if variation != entry
+				l3.xpath('.//L9').each{|l9|
+				# l7.xpath('.//L9').each{|l9|
+					variation = l9.text.delete(".\s\n")
+					# sig_list[right]["RIGHT"].push(variation)
+					if variation != entry
+						v_suw_lem, _, _ = parsing_mecab(nm, variation)
+						if v_suw_lem.length != 1
 							l_hash["variation"].push(variation)
-							v_suw_lem, _, _ = parsing_mecab(nm, variation)
-							if v_suw_lem != nil
-								l_hash["variation_lemma"].push(v_suw_lem) unless v_suw_lem == nil
-							end
+							l_hash["variation_lemma"].push(v_suw_lem)
 						end
-					}
-					# sig_list[right]["RIGHT"].uniq!
+					end
 				}
-				# sig_list[left]["LEFT"].uniq!
+			# }
 				# l_hash["right"].uniq!
 				l_hash["left"].uniq!
 				l_hash["variation"].uniq!
 				l_hash["variation_lemma"].uniq!
-
 				g_hash[l3id] = l_hash
+
 			end
 		}
 	}
+	# p s_cnt, s_one_cnt, v_cnt,v_cnt_2, v_cnt_3
 
 	# puts JSON.pretty_generate(g_hash)
-	writeJSON(RESULT_DIC, g_hash)
+	writeJSON(todict, g_hash)
 
 end
 

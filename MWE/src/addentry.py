@@ -1,12 +1,13 @@
 #coding: utf-8
 
 import json
+import sys
 import copy
 from collections import defaultdict
 
-DICT="../result/tsutsuji_dic_20161121.json"
+# DICT="../result/tsutsuji_dic_20161206.json"
 ADDLIST="../result/candidate_edit.txt"
-RESULT_DIC="../result/tsutsuji_dic_20161128.json"
+# RESULT_DIC="../result/tsutsuji_dic_20161215.json"
 
 
 def opendic(path):
@@ -23,8 +24,8 @@ def openaddlist(path):
 			addhash[mwe] = mweidlist.split(",")
 	return addhash
 
-def writedic(jsondic):
-	with open(RESULT_DIC, "w") as f:
+def writedic(toresult, jsondic):
+	with open(toresult, "w") as f:
 		json.dump(jsondic, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',', ': '))
 
 
@@ -72,15 +73,30 @@ def makeentry(mweid, mwe, jsondic):
 
 	return jsondic
 
+def getpath():
+	args = sys.argv
+	return args[1], args[2]
+
 def main():
-	jsondic = opendic(DICT)
+	todict, toresult = getpath()
+	jsondic = opendic(todict)
+	v_cnt = 0
+	for k,v in jsondic.items():
+		v_cnt += len(v["variation"])
+	print(v_cnt)
+
 	addhash = openaddlist(ADDLIST)
 	for mwe, addmweidlist in addhash.items():
 
 		for mweid in addmweidlist:
 			jsondic = makeentry(mweid, mwe, jsondic)
 
-	writedic(jsondic)
+	v_cnt = 0
+	for k,v in jsondic.items():
+		v_cnt += len(v["variation"])
+	print(v_cnt)
+
+	# writedic(toresult, jsondic)
 
 if __name__ == '__main__':
 	main()

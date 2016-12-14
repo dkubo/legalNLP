@@ -242,12 +242,19 @@ def main():
 	# output, matchspan, meaninglist = data(fpath, frg=1)
 	# countMeaning(list(set(meaninglist)))
 	if args[1] == "-ud":
-		for ftype in ["train", "test", "dev"]:
-			fpath1 = "../../result/ud/matced_{}_1206.csv".format(ftype)
-			outpath1 = "../../result/ud/matced_{}_1206_buf.tsv".format(ftype)
-			outpath2 = "../../result/ud/matced_{}_1206_rmoneword.tsv".format(ftype)
-			internal = "../../result/ud/matced_{}_1206_rmoneword_naibu.tsv".format(ftype)
-			proc(fpath1, outpath1, outpath2, internal)
+		ftype = "dev"
+		fpath1 = "../../result/ud/ud_matced_{}_1215.csv".format(ftype)
+		outpath1 = "../../result/ud/ud_matced_{}_1215_buf.tsv".format(ftype)
+		outpath2 = "../../result/ud/ud_matced_{}_1215_rmoneword.tsv".format(ftype)
+		internal = "../../result/ud/ud_matced_{}_1215_rmoneword_naibu.tsv".format(ftype)
+		proc(fpath1, outpath1, outpath2, internal)
+
+		# for ftype in ["train", "test", "dev"]:
+		# 	fpath1 = "../../result/ud/ud_matced_{}_1206.csv".format(ftype)
+		# 	outpath1 = "../../result/ud/ud_matced_{}_1206_buf.tsv".format(ftype)
+		# 	outpath2 = "../../result/ud/ud_matced_{}_1206_rmoneword.tsv".format(ftype)
+		# 	internal = "../../result/ud/ud_matced_{}_1206_rmoneword_naibu.tsv".format(ftype)
+		# 	proc(fpath1, outpath1, outpath2, internal)
 
 	elif args[1] == "-bccwj":
 		fpath1 = "../../result/bccwj/bccwj_matced_1208.csv"

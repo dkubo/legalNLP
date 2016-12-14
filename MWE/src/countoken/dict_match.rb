@@ -6,10 +6,10 @@ require 'json'
 require 'csv'
 
 # for ITC
-MYDIC = "../../result/tsutsuji_dic_20161206.json"	# 先頭の「う」と「ん」を削除、ハイフン処理をした辞書
+# MYDIC = "../../result/tsutsuji_dic_20161215.json"	# 先頭の「う」と「ん」を削除, ハイフン処理, エントリ追加をした辞書
 
-CONST1="./const/const1_unidic.tsv"
-CONST2="./const/const2.tsv"
+CONST1="../const/const1_unidic.tsv"
+CONST2="../const/const2.tsv"
 
 
 # カンマ区切りされているデータがある⇒分割
@@ -107,28 +107,39 @@ def proc(sent_hash, mwelist, consthash, outdata)
 	return outdata
 end
 
+def getpath()
+	return ARGV[0], ARGV[1].chomp
+end
+
 def main()
-	@corptype = ARGV[0]
+	@corptype, todict = getpath()
 	data = ProcData.new()
 
 	# 制約のリスト取得
 	consthash = data.getConst(CONST1, CONST2)
 
 	# 各辞書からMWEのリストを取得
-	mwelist = data.getmwe(MYDIC)	# [[mweid, mwe, leftconst, meaning], [], ...]
+	mwelist = data.getmwe(todict)	# [[mweid, mwe, leftconst, meaning], [], ...]
 	# p mwelist.length		# 3609
 
 	# open the corpus
 	outdata = []
 	if @corptype == "-ud"
-		for type in ["train", "test", "dev"] do
-			p type
-			tocorp = "../../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
-			sent_hash = data.splitSentence(tocorp, "ud")	# train: 6039, test: , dev: 
-			outdata = proc(sent_hash, mwelist, consthash, outdata)
-			result = "../../result/ud/ud_matced_#{type}_1206.csv"
-			outdata = data.writeCSV(result, outdata)
-		end
+		type = "dev"
+		tocorp = "../../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
+		sent_hash = data.splitSentence(tocorp, "ud")	# train: 6039, test: , dev: 
+		outdata = proc(sent_hash, mwelist, consthash, outdata)
+		result = "../../result/ud/ud_matced_#{type}_1215.csv"
+		outdata = data.writeCSV(result, outdata)
+
+		# for type in ["train", "test", "dev"] do
+			# p type
+			# tocorp = "../../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
+			# sent_hash = data.splitSentence(tocorp, "ud")	# train: 6039, test: , dev: 
+			# outdata = proc(sent_hash, mwelist, consthash, outdata)
+			# result = "../../result/ud/ud_matced_#{type}_1206.csv"
+			# outdata = data.writeCSV(result, outdata)
+		# end
 	elsif @corptype == "-bccwj"
 		tocorp = "../../data/20161007/corpus/bccwj/core_SUW.txt"
 		sent_hash = data.splitSentence(tocorp, "bccwj")	# train: 6039, test: , dev: 

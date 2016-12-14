@@ -11,7 +11,6 @@ class ProcData
 		data_hash.each{|mweid, value|
 			# @mwelist.push([mweid, value["suw_lemma"], value["left"], value["meaning"]])
 			@mwelist.push([mweid, value["suw_lemma"], value["left"]])
-
 			for mwe in value["variation_lemma"]
 				# mwelist.push([mweid, mwe, value["left"], value["meaning"]])
 				@mwelist.push([mweid, mwe, value["left"]])

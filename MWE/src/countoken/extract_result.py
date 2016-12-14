@@ -3,6 +3,7 @@
 import json
 import re
 import csv
+import sys
 from collections import defaultdict
 
 def getMWEID(todict):
@@ -62,11 +63,10 @@ def writeCSV(path, outdata):
 		writer.writerows(outdata)
 
 def main():
-	# todict = "../result/tsutsuji_dic_20161128.json"
-	# resultpath = "../result/dev_matced_1202_rmoneword_naibu.tsv"
-	todict = "../../result/tsutsuji_dic_20161206.json"
-	resultpath = "../../result/ud/matced_dev_1206_rmoneword_naibu.tsv"
-	outpath = "./ud_annotation_dev_1208.tsv"
+	# args = sys.argv
+	todict = "../../result/tsutsuji_dic_20161215.json"
+	resultpath = "../../result/ud/ud_matced_dev_1215_rmoneword_naibu.tsv"
+	outpath = "./ud_annotation_dev_1215.tsv"
 
 	mweidlist = getMWEID(todict)
 	result = extract(mweidlist, resultpath)
