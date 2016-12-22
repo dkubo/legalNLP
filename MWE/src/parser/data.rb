@@ -33,6 +33,8 @@ def splitSentence(tocorp)
 			suw_list.push(l) unless l == []
 		end
 	}
+	sent_hash[pre_sentid] = suw_list
+
 	return sent_hash
 end
 
@@ -86,7 +88,6 @@ def main()
 		trainids.uniq!
 	end
 	train, dev, mwes = splitdata(sent_hash, trainids)
-
 	["train", "dev", "mwes"].zip([train, dev, mwes]){|ftype, data|
 		writeCSV("../../result/ud/parser/#{ftype}.conll", data)
 	}
