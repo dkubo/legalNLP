@@ -87,7 +87,7 @@ def main()
 	end
 	train, dev, mwes = splitdata(sent_hash, trainids)
 
-	["train", "test", "mwes"].zip([train, dev, mwes]){|ftype, data|
+	["train", "dev", "mwes"].zip([train, dev, mwes]){|ftype, data|
 		writeCSV("../../result/ud/parser/#{ftype}.conll", data)
 	}
 
