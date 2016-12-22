@@ -1,0 +1,10 @@
+・参考url
+http://nlp.stanford.edu/software/nndep.shtml
+http://nlp.stanford.edu/nlp/javadoc/javanlp-3.5.0/edu/stanford/nlp/parser/nndep/DependencyParser.html
+
+・実行コマンド
+java edu.stanford.nlp.parser.nndep.DependencyParser -trainFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/data/20161007/corpus/ud/ja_ktc-ud-train-merged.conll -devFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/data/20161007/corpus/ud/ja_ktc-ud-dev-merged.conll -embeddingSize 50 -model nndep.model.txt.gz
+
+・以下で実行
+qlogin -q galaxy_intr.q
+/home/is/daiki-ku/opt/stanford-corenlp-full-2016-10-31/stanford-corenlp-3.7.0
