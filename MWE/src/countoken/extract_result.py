@@ -69,7 +69,7 @@ def main():
 	if args[1] == "-ud":
 		for ftype in ["train", "test", "dev"]:
 			resultpath = "../../result/ud/ud_matced_{}_1222_rmoneword_naibu.tsv".format(ftype)
-			outpath = "./ud_annotation_{}_1222.tsv".format(ftype)
+			outpath = "../../result/ud/ud_annotation_{}_1222.tsv".format(ftype)
 			mweidlist = getMWEID(todict)
 			result = extract(mweidlist, resultpath)
 			writeCSV(outpath, result)

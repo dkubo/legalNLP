@@ -1,4 +1,6 @@
 #coding: utf-8
+require 'json'
+require 'csv'
 
 class ProcData
 	def initialize()
