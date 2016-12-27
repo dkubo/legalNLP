@@ -3,8 +3,11 @@ http://nlp.stanford.edu/software/nndep.shtml
 http://nlp.stanford.edu/nlp/javadoc/javanlp-3.5.0/edu/stanford/nlp/parser/nndep/DependencyParser.html
 
 ・実行コマンド
-java edu.stanford.nlp.parser.nndep.DependencyParser -trainFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/train.conll -devFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/dev.conll  -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes.conll -embeddingSize 50 -model nomwes.model.txt.gz > log_1223.txt
+java edu.stanford.nlp.parser.nndep.DependencyParser -trainFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/train.conll -devFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/dev.conll  -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes.conll -embeddingSize 50 -model nomwes.model.txt.gz > log_1223.txt 2>&1
 
 ・以下で実行
 qlogin -q galaxy_intr.q
 /home/is/daiki-ku/opt/stanford-corenlp-full-2016-10-31/stanford-corenlp-3.7.0
+
+・モデルを使ったパージング
+java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model.txt.gz -textFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes.conll -outFile result.txt
