@@ -6,6 +6,7 @@ import csv
 import sys
 from collections import defaultdict
 
+# get mweid from dict
 def getMWEID(todict):
 	mweidlist = []
 	with open(todict, 'r') as f:
@@ -22,6 +23,7 @@ def getMWEID(todict):
 					mweidlist.append(mweid)
 					break
 	return mweidlist
+
 
 def shape(matchedList):
 	poslist, outstring = defaultdict(list), ""
@@ -67,12 +69,18 @@ def main():
 	todict = "../../result/tsutsuji_dic_20161215.json"
 
 	if args[1] == "-ud":
-		for ftype in ["train", "test", "dev"]:
-			resultpath = "../../result/ud/ud_matced_{}_1222_rmoneword_naibu.tsv".format(ftype)
-			outpath = "../../result/ud/ud_annotation_{}_1222.tsv".format(ftype)
-			mweidlist = getMWEID(todict)
-			result = extract(mweidlist, resultpath)
-			writeCSV(outpath, result)
+		resultpath = "../../result/ud/mwes_matced_1227_rmoneword_naibu.tsv"
+		outpath = "../../result/ud/mwes_matced_annotation_1227.tsv"
+		mweidlist = getMWEID(todict)
+		result = extract(mweidlist, resultpath)
+		writeCSV(outpath, result)
+
+		# for ftype in ["train", "test", "dev"]:
+			# resultpath = "../../result/ud/ud_matced_{}_1227_rmoneword_naibu.tsv".format(ftype)
+			# outpath = "../../result/ud/ud_annotation_{}_1227.tsv".format(ftype)
+			# mweidlist = getMWEID(todict)
+			# result = extract(mweidlist, resultpath)
+			# writeCSV(outpath, result)
 
 
 if __name__ == '__main__':

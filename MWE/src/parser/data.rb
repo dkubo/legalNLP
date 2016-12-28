@@ -80,17 +80,27 @@ def main()
 	sent_hash = {}
 
 	for ftype in ["train", "test", "dev"]
-		p ftype
+		# p ftype
 		tocorp = "../../data/20161007/corpus/ud/ja_ktc-ud-#{ftype}-merged.conll"
-		toresult = "../../result/ud/ud_annotation_#{ftype}_1222.tsv"
+		toresult = "../../result/ud/ud_matced_#{ftype}_1222_rmoneword.tsv"
+
 		sent_hash = sent_hash.merge(splitSentence(tocorp))
 		trainids = trainids + getids(toresult)
 		trainids.uniq!
 	end
-	train, dev, mwes = splitdata(sent_hash, trainids)
-	["train", "dev", "mwes"].zip([train, dev, mwes]){|ftype, data|
-		writeCSV("../../result/ud/parser/#{ftype}.conll", data)
-	}
+
+	# trainids.each{|sid|
+	# 	puts sid
+	# }
+
+	# train, dev, mwes = splitdata(sent_hash, trainids)
+	# p train.length
+	# p dev.length
+	# p train.length + dev.length # sentence of not including mwes
+	# p mwes.length
+	# ["train", "dev", "mwes"].zip([train, dev, mwes]){|ftype, data|
+	# 	writeCSV("../../result/ud/parser/#{ftype}_1228.conll", data)
+	# }
 
 end
 

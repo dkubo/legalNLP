@@ -37,7 +37,7 @@ class ProcData
 			if line[12] == "" or line[12].split(",", -1).length == 1
 				vari2.push(line[12])
 			else
-					vari2 += line[12].split(",", -1)
+				vari2 += line[12].split(",", -1)
 			end
 		}
 

@@ -3,11 +3,17 @@ http://nlp.stanford.edu/software/nndep.shtml
 http://nlp.stanford.edu/nlp/javadoc/javanlp-3.5.0/edu/stanford/nlp/parser/nndep/DependencyParser.html
 
 ・実行コマンド
-java edu.stanford.nlp.parser.nndep.DependencyParser -trainFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/train.conll -devFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/dev.conll  -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes.conll -embeddingSize 50 -model nomwes.model.txt.gz > log_1223.txt 2>&1
+# maxIterを指定しないと，最後のLAS等の結果が出力されない（途中で実行が終了してしまうため）
+java edu.stanford.nlp.parser.nndep.DependencyParser -trainFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/train_1228.conll -devFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/dev_1228.conll  -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes_1228.conll -embeddingSize 50 -maxIter 10000 -model 
+nomwes.model_withoutall.txt.gz > log_1227.txt 2>&1
+
+・モデルを使ったパージング
+# teztFileではなく，testFileを指定しないと，postaggerが必要になる
+java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model.txt.gz -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes.conll -outFile result.txt
+
+java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model_withoutall.txt.gz -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes_1228.conll -outFile result.txt
 
 ・以下で実行
 qlogin -q galaxy_intr.q
 /home/is/daiki-ku/opt/stanford-corenlp-full-2016-10-31/stanford-corenlp-3.7.0
 
-・モデルを使ったパージング
-java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model.txt.gz -textFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes.conll -outFile result.txt

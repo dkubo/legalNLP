@@ -123,16 +123,22 @@ def main()
 	# p mwelist.length		# 3609
 
 	# open the corpus
-	outdata = []
 	if @corptype == "-ud"
-		for type in ["train", "test", "dev"] do
-			p type
-			tocorp = "../../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
-			sent_hash = data.splitSentence(tocorp, "ud")	# train: 6039, test: , dev: 
-			outdata = proc(sent_hash, mwelist, consthash, outdata)
-			result = "../../result/ud/ud_matced_#{type}_1222.csv"
-			outdata = data.writeCSV(result, outdata)
-		end
+		outdata = []
+		tocorp = "../../result/ud/parser/mwes.conll"
+		sent_hash = data.splitSentence(tocorp, "ud")	# train: 6039, test: , dev: 
+		outdata = proc(sent_hash, mwelist, consthash, outdata)
+		result = "../../result/ud/mwes_matced_1227.csv"
+		outdata = data.writeCSV(result, outdata)
+
+	# 	for type in ["train", "test", "dev"] do
+	# 		p type
+	# 		tocorp = "../../data/20161007/corpus/ud/ja_ktc-ud-#{type}-merged.conll"
+	# 		sent_hash = data.splitSentence(tocorp, "ud")	# train: 6039, test: , dev: 
+	# 		outdata = proc(sent_hash, mwelist, consthash, outdata)
+	# 		result = "../../result/ud/ud_matced_#{type}_1227.csv"
+	# 		outdata = data.writeCSV(result, outdata)
+	# 	end
 
 	elsif @corptype == "-bccwj"
 		tocorp = "../../data/20161007/corpus/bccwj/core_SUW.txt"
