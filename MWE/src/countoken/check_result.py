@@ -176,8 +176,10 @@ def groupingMWE(outdata):
 
 def dictShape(posmean):
 	outstring, num = "", 1
+	idlist = ""
 
 	for mweid, _ in posmean.items():
+		idlist += re.sub("\[|\]|\'","", mweid) + ","
 	# for mweid, meanings in posmean.items():
 		posid = mweid[-3]	# mweid: str
 		# meanings = re.sub(r'(\[|\'|\'|\]|\s)',"", meanings[0]).split(",")
@@ -185,7 +187,7 @@ def dictShape(posmean):
 			# outstring += str(num)+"=>"+posid+":"+meaning+","
 		outstring += str(num)+"=>"+posid+","
 		num += 1
-	return outstring+"0=>その他"
+	return outstring+"0=>その他", idlist[0:-1]
 
 
 def collectMWEID(outdata):
@@ -210,9 +212,10 @@ def collectMWEID(outdata):
 					mweids.append(token[0])
 					posmean[token[0]].append(token[-1])
 
-			newtoken2.append(posmean)
-			posmean = dictShape(posmean)
+			# newtoken2.append(posmean)
+			posmean, idlist = dictShape(posmean)
 			newtoken.append(posmean)
+			newtoken2.append(idlist)
 
 			newoutdata.append(newtoken)
 			forus.append(newtoken2)
@@ -242,18 +245,18 @@ def main():
 	# output, matchspan, meaninglist = data(fpath, frg=1)
 	# countMeaning(list(set(meaninglist)))
 	if args[1] == "-ud":
-		fpath1 = "../../result/ud/mwes_matced_1227.csv"
-		outpath1 = "../../result/ud/mwes_matced_1227_buf.tsv"
-		outpath2 = "../../result/ud/mwes_matced_1227_rmoneword.tsv"
-		internal = "../../result/ud/mwes_matced_1227_rmoneword_naibu.tsv"
-		proc(fpath1, outpath1, outpath2, internal)
+		# fpath1 = "../../result/ud/mwes_matced_1227.csv"
+		# outpath1 = "../../result/ud/mwes_matced_1227_buf.tsv"
+		# outpath2 = "../../result/ud/mwes_matced_1227_rmoneword.tsv"
+		# internal = "../../result/ud/mwes_matced_1227_rmoneword_naibu.tsv"
+		# proc(fpath1, outpath1, outpath2, internal)
 
-		# for ftype in ["train", "test", "dev"]:
-		# 	fpath1 = "../../result/ud/ud_matced_{}_1227.csv".format(ftype)
-		# 	outpath1 = "../../result/ud/ud_matced_{}_1227_buf.tsv".format(ftype)
-		# 	outpath2 = "../../result/ud/ud_matced_{}_1227_rmoneword.tsv".format(ftype)
-		# 	internal = "../../result/ud/ud_matced_{}_1227_rmoneword_naibu.tsv".format(ftype)
-		# 	proc(fpath1, outpath1, outpath2, internal)
+		for ftype in ["train", "test", "dev"]:
+			fpath1 = "../../result/ud/ud_matced_{}_1222.csv".format(ftype)
+			outpath1 = "../../result/ud/ud_matced_{}_1222_buf.tsv".format(ftype)
+			outpath2 = "../../result/ud/ud_matced_{}_1222_rmoneword.tsv".format(ftype)
+			internal = "../../result/ud/ud_matced_{}_1222_rmoneword_naibu.tsv".format(ftype)
+			proc(fpath1, outpath1, outpath2, internal)
 
 	elif args[1] == "-bccwj":
 		fpath1 = "../../result/bccwj/bccwj_matced_1208.csv"

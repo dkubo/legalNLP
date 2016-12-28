@@ -11,7 +11,7 @@ nomwes.model_withoutall.txt.gz > log_1227.txt 2>&1
 # teztFileではなく，testFileを指定しないと，postaggerが必要になる
 java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model.txt.gz -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes.conll -outFile result.txt
 
-java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model_withoutall.txt.gz -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes_1228.conll -outFile result.txt
+java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model_withoutall.txt.gz -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes_1228.conll -outFile result_1228.txt
 
 ・以下で実行
 qlogin -q galaxy_intr.q
