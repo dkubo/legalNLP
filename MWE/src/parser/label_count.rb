@@ -62,7 +62,7 @@ def main()
 	# 		end
 	# 	}
 	# }
-	# p mwe
+	# p mwe 	# 2645 (ラベル総数, HPと同じ数になった: http://universaldependencies.org/ja/dep/mwe.html)
 
 	"""
 	マッチした箇所が，元のUDでは何のラベル化を調べることでカウント
