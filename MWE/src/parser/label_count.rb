@@ -67,31 +67,33 @@ def main()
 	"""
 	マッチした箇所が，元のUDでは何のラベル化を調べることでカウント
 	"""
-	# cnt, total = 0, 0
-	# matchhash.each{|k, spans|
-	# 	spans.uniq!
-	# 	spans.each{|span|
-	# 		total += 1
-	# 		len, frg, labels = 0, 0, []
-	# 		sent_hash[k].each{|part|
-	# 			# p part[1]#.split("-")[0].delete("\s")
-	# 			str, label = part[1], part[7]
-	# 			len += str.length
-	# 			if len >= span[0].to_i and len <= span[1].to_i
-	# 				labels.push(label)
-	# 			end
+	cnt, total = 0, 0
+	matchhash.each{|k, spans|
+		spans.uniq!
+		spans.each{|span|
+			total += 1
+			len, frg, labels = 0, 0, []
+			sentence = ""
+			sent_hash[k].each{|part|
+				# p part[1]#.split("-")[0].delete("\s")
+				str, label = part[1], part[7]
+				len += str.length
+				sentence += str
+				if len >= span[0].to_i and len <= span[1].to_i
+					labels.push(label)
+				end
 
-	# 		}
+			}
+			if not labels.include?("mwe")
+				if labels != []
+					cnt += 1
+					p labels		# ← ここをカウント！！
+				end
+			end
 
-	# 		if not labels.include?("mwe")
-	# 			if labels != []
-	# 				cnt += 1
-	# 				p labels		# ← ここをカウント！！
-	# 			end
-	# 		end
-	# 	}
-	# }
-	# p total, cnt 	# 5625/7032 (マッチしたトークンで，元のUDにmweラベルがついていないトークン)
+		}
+	}
+	p total, cnt 	# 5625/7032 (マッチしたトークンで，元のUDにmweラベルがついていないトークン)
 end
 
 main()
