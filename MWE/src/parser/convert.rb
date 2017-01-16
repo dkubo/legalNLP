@@ -112,7 +112,10 @@ end
 def fixsentpart(newvalues, headword, newpos)
 	newvalues[-1][1], newvalues[-1][2] = headword, headword
 	newvalues[-1][3], newvalues[-1][4] = newpos, newpos
-	newvalues[-1][5], newvalues[-1][6] = "_", "_"
+	# newvalues[-1][5], newvalues[-1][6] = "_", "_"
+	# newvalues[-1][5], newvalues[-1][6] = "_", "_"	# 暫定的に適当に付ける
+	newvalues[-1][5], newvalues[-1][6] = "_", newvalues[-1][0].to_i-2	# 暫定的に適当に付ける
+	newvalues[-1][7] = "mwe"
 	newvalues[-1][8], newvalues[-1][9] = headword, headword
 	newvalues[-1][13], newvalues[-1][14] = headword, headword
 	# p newvalues
@@ -174,7 +177,7 @@ def getpos(mweid)
 			end
 		end
 
-		return "oh no"
+		return "nil"
 	else
 		# 格助詞型(P), とりたて詞型(T) 提題助詞型(W), 形式名詞型(N) => ADP
 		# 連体助詞型(D) => ADP
@@ -227,8 +230,8 @@ def main()
 			new_senthash[sentid] = genPart(matchhash[sentid], sentence, jsondict)
 		end
 	}
-	# result="../../result/ud/parser/convert_mwes_1228.conll"
-	# writeCSV(result, new_senthash)
+	result="../../result/ud/parser/convert_mwes_1228.conll"
+	writeCSV(result, new_senthash)
 end
 
 main()

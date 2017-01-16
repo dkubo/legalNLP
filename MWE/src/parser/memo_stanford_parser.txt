@@ -8,12 +8,17 @@ java edu.stanford.nlp.parser.nndep.DependencyParser -trainFile /home/is/daiki-ku
 nomwes.model_withoutall.txt.gz > log_1227.txt 2>&1
 
 ・モデルを使ったパージング
-# teztFileではなく，testFileを指定しないと，postaggerが必要になる
-java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model.txt.gz -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes.conll -outFile result.txt
+# textFileではなく，testFileを指定しないと，postaggerが必要になる
+# testFileを指定すると，goldが必要になる(evaluateまで勝手にやるから)
+java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model_withoutall.txt.gz -myTestFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/convert_mwes_1228.conll -outFile result_0111.txt
 
-java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model_withoutall.txt.gz -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/mwes_1228.conll -outFile result_1228.txt
+# java edu.stanford.nlp.parser.nndep.DependencyParser -model nomwes.model_withoutall.txt.gz -testFile /home/is/daiki-ku/Desktop/github/legalNLP/MWE/result/ud/parser/convert_mwes_1228.conll -outFile result_0111.txt
 
-・以下で実行
+
+# 以下で実行
 qlogin -q galaxy_intr.q
 /home/is/daiki-ku/opt/stanford-corenlp-full-2016-10-31/stanford-corenlp-3.7.0
 
+# コンパイル
+cd /home/is/daiki-ku/opt/stanford-corenlp-full-2016-10-31/stanford-corenlp-3.7.0-sources
+javac edu/stanford/nlp/parser/nndep/DependencyParser.java

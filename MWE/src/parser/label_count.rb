@@ -7,7 +7,9 @@ def getMatchhash()
 	matchhash = Hash.new { |h,k| h[k] = [] }
 
 	for ftype in ["train", "test", "dev"]
-		matchinfo = "../../result/ud/ud_matced_#{ftype}_1222_rmoneword_naibu.tsv"
+		# matchinfo = "../../result/ud/ud_matced_#{ftype}_1222_rmoneword_naibu.tsv"
+		# matchinfo = "../../result/ud/ud_matced_#{ftype}_1222_rmoneword_naibu.tsv"
+		matchinfo = "../../result/ud/ud_matced_#{ftype}_0114_tokencount.tsv"
 
 		file = open(matchinfo, 'r')
 		file.each_line{|l|
@@ -67,7 +69,7 @@ def main()
 	"""
 	マッチした箇所が，元のUDでは何のラベル化を調べることでカウント
 	"""
-	cnt, total = 0, 0
+	cnt, total, buf = 0, 0, 0
 	matchhash.each{|k, spans|
 		spans.uniq!
 		spans.each{|span|
@@ -82,18 +84,18 @@ def main()
 				if len >= span[0].to_i and len <= span[1].to_i
 					labels.push(label)
 				end
-
 			}
 			if not labels.include?("mwe")
 				if labels != []
 					cnt += 1
 					p labels		# ← ここをカウント！！
 				end
+			else
+				buf += 1
 			end
-
 		}
 	}
-	p total, cnt 	# 5625/7032 (マッチしたトークンで，元のUDにmweラベルがついていないトークン)
+	p total, cnt, buf 	# 5625/7032 (マッチしたトークンで，元のUDにmweラベルがついていないトークン)
 end
 
 main()
