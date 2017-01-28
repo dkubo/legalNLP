@@ -70,32 +70,44 @@ def main()
 	マッチした箇所が，元のUDでは何のラベル化を調べることでカウント
 	"""
 	cnt, total, buf = 0, 0, 0
+	mwe_matchcount = Hash.new { |h,k| h[k] = 0 }
 	matchhash.each{|k, spans|
 		spans.uniq!
 		spans.each{|span|
 			total += 1
-			len, frg, labels = 0, 0, []
+			len, frg, mwe, labels = 0, 0, [], []
 			sentence = ""
+			p "sentence id:" + k
 			sent_hash[k].each{|part|
 				# p part[1]#.split("-")[0].delete("\s")
 				str, label = part[1], part[7]
 				len += str.length
 				sentence += str
 				if len >= span[0].to_i and len <= span[1].to_i
+					mwe.push(str)
 					labels.push(label)
 				end
 			}
 			if not labels.include?("mwe")
 				if labels != []
 					cnt += 1
-					p labels		# ← ここをカウント！！
+					# p labels		# ← ここをカウント！！
 				end
 			else
+				# p mwe		
+				mwe_matchcount[mwe] += 1
+				# p labels
 				buf += 1
 			end
 		}
 	}
 	p total, cnt, buf 	# 5625/7032 (マッチしたトークンで，元のUDにmweラベルがついていないトークン)
+
+	# check = 0
+	# sorted = mwe_matchcount.sort {|(k1, v1), (k2, v2)| v2 <=> v1 }
+	# sorted.each{|k, n|
+	# 	check += n
+	# }
 end
 
 main()
