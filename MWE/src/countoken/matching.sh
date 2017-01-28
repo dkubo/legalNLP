@@ -1,4 +1,4 @@
-# 辞書(1語除去済み)でマッチング，token数カウントするのはここ
+# 辞書(1語除去済み)でマッチング
 # ruby dict_match.rb -ud ../../result/tsutsuji_dic_20161215.json
 # 入れ子排除，ソート
 python check_result.py -ud 
