@@ -66,7 +66,7 @@ class ProcData
 	# コーパスを一文ずつに分解する
 	def splitSentence(tocorp, type)
 		sent_hash, lasthash = Hash.new(), Hash.new()
-		suw_list, pre_sentid, sentid, label = [], "", "", "B"
+		suw_list, pre_sentid, sentid = [], "", ""
 		lemmasent, sentence, sentpos = [], [], []
 		corpus = open(tocorp, 'r')
 
@@ -90,7 +90,7 @@ class ProcData
 				lasthash[s_id] = [sentence, lemma, sentpos]
 			}
 		elsif type == "bccwj"
-			baseid, cnt, fieldid = 1, 1, ""
+			baseid, cnt, fieldid, label = 1, 1, "B"
 			corpus.each_line{|l|
 				l = l.chomp.split("\t")
 				# genbun = l[23] 	# この情報おかしい
