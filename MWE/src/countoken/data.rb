@@ -66,10 +66,10 @@ class ProcData
 	# コーパスを一文ずつに分解する
 	def splitSentence(tocorp, type)
 		sent_hash, lasthash = Hash.new(), Hash.new()
-
 		suw_list, pre_sentid, sentid, label = [], "", "", "B"
 		lemmasent, sentence, sentpos = [], [], []
 		corpus = open(tocorp, 'r')
+
 		if type == "ud"
 			corpus.each_line{|l|
 				l = l.chomp.split("\t")
@@ -90,23 +90,29 @@ class ProcData
 				lasthash[s_id] = [sentence, lemma, sentpos]
 			}
 		elsif type == "bccwj"
-			sentid = 1
+			baseid, cnt, fieldid = 1, 1, ""
 			corpus.each_line{|l|
 				l = l.chomp.split("\t")
 				# genbun = l[23] 	# この情報おかしい
-				label, lemma, pos, katuyogata, katuyokei, syojisyutu = l[9], l[12], l[16], l[17], l[18], l[22]
+				fieldid, label, lemma, pos, katuyogata, katuyokei, sentpart = l[1], l[9], l[12], l[16], l[17], l[18], l[22]
+				if cnt == 1
+					label = "I"
+				end
 				if label == "I"
 					lemmasent.push(lemma)
-					sentence.push(syojisyutu)
+					sentence.push(sentpart)
 					sentpos.push([pos, katuyogata, katuyokei])
-				else
+				elsif label == "B"
+					sentid = fieldid + "_" + baseid.to_s
 					lasthash[sentid.to_s] = [sentence, lemmasent, sentpos]
-					sentid += 1
-					lemmasent = [lemma]
-					sentence = [syojisyutu]
+					baseid += 1
+					lemmasent, sentence = [lemma], [sentpart]
 					sentpos = [[pos, katuyogata, katuyokei]]
 				end
+				cnt += 1
 			}
+			sentid = fieldid + "_" + baseid.to_s
+			lasthash[sentid.to_s] = [sentence, lemmasent, sentpos]
 		end
 		return lasthash
 	end

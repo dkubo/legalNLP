@@ -52,24 +52,6 @@ def loadDict(dict)
 	return jsondict
 end
 
-def getMatchhash()
-	matchhash = Hash.new { |h,k| h[k] = [] }
-
-	for ftype in ["train", "test", "dev"]
-		matchinfo = "../../result/ud/ud_matced_#{ftype}_1222_rmoneword_naibu.tsv"
-
-		file = open(matchinfo, 'r')
-		file.each_line{|l|
-			mweid = l.split("\t")[-1].chomp.split(",")
-			sentid = l.split("\t")[1]
-			sposi = l.split("\t")[2]
-			eposi = l.split("\t")[3]
-			matchhash[sentid].push([mweid, sposi, eposi])
-		}
-	end
-	return matchhash
-end
-
 def	writeCSV(fname, data)
 	File.open(fname, "w") do |file|
 		data.each{|sentid, sentence|
@@ -82,15 +64,28 @@ def	writeCSV(fname, data)
 	end
 end
 
-# mwe部分を一つにまとめたことによるword idのずれを修正
-def fixwid(newvalues)
-	for i in 0..newvalues.length-1
-		newvalues[i][0] = (i + 1).to_s
+def getMatchhash()
+	matchhash = Hash.new { |h,k| h[k] = [] }
+	for ftype in ["train", "test", "dev"]
+		matchinfo = "../../result/ud/ud_matced_#{ftype}_0128_edited.tsv"
+
+		file = open(matchinfo, 'r')
+		file.each_line{|l|
+			posids = []
+			tmp = l.chomp[1..-2].split("\t")
+			mweids = tmp[-1].split(",")
+			mweids.each{|mweid|
+				posids.push(mweid[-1])
+			}
+			posids.uniq!
+			sentid, sposi, eposi = tmp[0], tmp[1], tmp[2]
+			matchhash[sentid].push([posids, sposi, eposi])
+		}
 	end
-	return newvalues
+	return matchhash
 end
 
-# 異なる品詞で，包含になってる部分がある → スパンが長い方を採用
+# 異なる品詞で，包含になってる部分がある場合 → スパンが長い方を採用
 def hoganCheck(matchedidx)
 	new_matchedidx = Marshal.load(Marshal.dump(matchedidx))
 	for i in 0..matchedidx.length-1
@@ -109,49 +104,8 @@ def hoganCheck(matchedidx)
 	return new_matchedidx
 end
 
-def fixsentpart(newvalues, headword, newpos)
-	newvalues[-1][1], newvalues[-1][2] = headword, headword
-	newvalues[-1][3], newvalues[-1][4] = newpos, newpos
-	# newvalues[-1][5], newvalues[-1][6] = "_", "_"
-	# newvalues[-1][5], newvalues[-1][6] = "_", "_"	# 暫定的に適当に付ける
-	newvalues[-1][5], newvalues[-1][6] = "_", newvalues[-1][0].to_i-2	# 暫定的に適当に付ける
-	newvalues[-1][7] = "mwe"
-	newvalues[-1][8], newvalues[-1][9] = headword, headword
-	newvalues[-1][13], newvalues[-1][14] = headword, headword
-	# p newvalues
-	return newvalues
-end
-
-def sentloop(sentence, m, newpos, jsondict)
-	totallen, m_frg, headword = 0, 0, ""
-	mweid, sposi, eposi = m
-	newvalues = []
-
-	sentence.each{|sentpart|
-		if totallen + 1 == sposi.to_i
-			m_frg = 1
-			newvalues.push(sentpart)
-		elsif totallen == eposi.to_i
-			m_frg = 0
-			if headword == ""
-				p jsondict[m[0][0]]["headword"]
-			end
-			newvalues = fixsentpart(newvalues, headword, newpos)
-		end
-
-		if m_frg == 1
-			headword += sentpart[1]
-		else
-			newvalues.push(sentpart)
-		end
-		totallen += sentpart[1].length
-	}
-	return newvalues
-end
-
 def getpos(mweid)
 	incfrg = 0
-
 	if mweid.length >= 2
 		mweid.each{|mid|
 			if ["P", "T", "W", "N", "D"].include?(mid[-1])
@@ -176,11 +130,9 @@ def getpos(mweid)
 				return "SCONJ"
 			end
 		end
-
 		return "nil"
 	else
-		# 格助詞型(P), とりたて詞型(T) 提題助詞型(W), 形式名詞型(N) => ADP
-		# 連体助詞型(D) => ADP
+		# 格助詞型(P), とりたて詞型(T) 提題助詞型(W), 形式名詞型(N), 連体助詞型(D) => ADP
 		if ["P", "T", "W", "N", "D"].include?(mweid[0][-1])
 			return "ADP"
 		# 接続助詞型(Q), 接続詞型(C) => SCONJ
@@ -193,45 +145,102 @@ def getpos(mweid)
 	end
 end
 
+def fixsentpart(newvalues, headword, newpos)
+	newvalues[-1][1], newvalues[-1][2] = headword, headword
+	newvalues[-1][3], newvalues[-1][4] = newpos, newpos
+	# newvalues[-1][5], newvalues[-1][6] = "_", "_"
+	# newvalues[-1][5], newvalues[-1][6] = "_", "_"	# 暫定的に適当に付ける
+	newvalues[-1][5], newvalues[-1][6] = "_", newvalues[-1][0].to_i-2	# 暫定的に適当に付ける
+	newvalues[-1][7] = "mwe"
+	newvalues[-1][8], newvalues[-1][9] = headword, headword
+	newvalues[-1][13], newvalues[-1][14] = headword, headword
+	# p newvalues
+	return newvalues
+end
+
+def sentloop(sentence, m, newpos, jsondict, sentid)
+	newvalues, totallen, m_frg, headword = [], 0, 0, ""
+	_, sposi, eposi = m
+
+	if sentid == "950131057-009"
+		p sposi, eposi
+	end
+	sentence.each{|sentpart|
+		if totallen + 1 == sposi.to_i
+			m_frg = 1
+			newvalues.push(sentpart)
+		elsif totallen == eposi.to_i
+			m_frg = 0
+			# if sentid == "950131057-009"
+			# 	p headword
+			# end
+			newvalues = fixsentpart(newvalues, headword, newpos)
+		end
+
+		if m_frg == 1
+			headword += sentpart[1]
+		else
+			newvalues.push(sentpart)
+		end
+		totallen += sentpart[1].length
+		if sentid == "950131057-009"
+			p "---------------------------"
+			p sentpart[1]
+			p totallen
+		end
+	}
+	return newvalues
+end
+
+# mwe部分を一つにまとめたことによるword idのずれを修正
+def fixwid(sentence)
+	for i in 0..sentence.length-1
+		sentence[i][0] = (i + 1).to_s
+	end
+	return sentence
+end
+
 # mwe部分を一つにまとめる
-def genPart(matched, sentence, jsondict)
+def genPart(matched, sentence, jsondict, sentid)
 	matched.each{|m|
-		# p m
+		# 品詞対応付け(DICT⇒UD)
 		newpos = getpos(m[0])
-		# if newpos == "oh no"
-		# 	p m[0], sentence
-		# end
-		sentence = sentloop(sentence, m, newpos, jsondict)
+		# 一つにまとめる
+		sentence = sentloop(sentence, m, newpos, jsondict, sentid)
+		# word_idのずれを修正
 		sentence = fixwid(sentence)
 	}
 	return sentence
 end
 
 def main()
-	data = ProcData.new()
 	todict = "../../result/tsutsuji_dic_20161215.json"
 	tocorp = "../../result/ud/parser/mwes_1228.conll"
 
+	# データ抽出
 	matchhash = getMatchhash()	# k: sentid, v: [[mweid, sposi, eposi], ..]
 	senthash = splitSentence(tocorp)
 	new_senthash = Marshal.load(Marshal.dump(senthash))	# deep copy
 	jsondict = loadDict(todict)
 
+	# マッチング
 	senthash.each{|sentid, sentence|
-		# if sentid == "950220031-019"
-		# 	p "sentid: " + sentid
-		# 	p matchhash[sentid]
-		# end
-
+		# p matchhash[sentid]	# [[["M","Q"], "34", "36"], [["P","Q"], "39", "42"]],...]
 		if matchhash[sentid].length > 1
+			# 入れ子になってたら長いスパンを採用
 			matchedidx = hoganCheck(matchhash[sentid])
-			new_senthash[sentid] = genPart(matchedidx, sentence, jsondict)
-		else
-			new_senthash[sentid] = genPart(matchhash[sentid], sentence, jsondict)
+			# if sentid == "950131057-009"
+			# 	p matchedidx
+			# end
+			# mwe部分を一つにまとめる
+			new_senthash[sentid] = genPart(matchedidx, sentence, jsondict, sentid)
+		# else
+		# 	new_senthash[sentid] = genPart(matchhash[sentid], sentence, jsondict)
 		end
 	}
-	result="../../result/ud/parser/convert_mwes_1228.conll"
-	writeCSV(result, new_senthash)
+	p new_senthash["950131057-009"]
+	# result="../../result/ud/parser/convert_mwes_0128.conll"
+	# writeCSV(result, new_senthash)
 end
 
 main()

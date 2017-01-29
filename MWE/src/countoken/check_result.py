@@ -9,24 +9,19 @@ import sys
 # マッチスパンが入れ子or 包含になっているものを確認
 # マッチMWEの種類数カウント
 
+##########################
+# 品詞∧スパンでデータ抽出
+##########################
 def data(fpath):
 	matchspan, output = defaultdict(list), defaultdict(list)
 	with open(fpath, "r") as f:
 		for line in f:
 			mweid, sentid, b, e, pre, mwe, post = line.rstrip().split(",")
 			b, e = int(b), int(e)
-			output[(sentid, (b,e), mweid[-1])].append([mweid, sentid, b, e, pre, mwe, post])
+			output[(sentid, (b,e), mweid[-1])].append([mweid, sentid, str(b), str(e), pre, mwe, post])
 			if not (b,e) in matchspan[sentid, mweid[-1]]:	# 重複防止
 				matchspan[sentid, mweid[-1]].append((b,e))
 	return output, matchspan
-
-
-def writeCSV(MOD_RESULT, outdata, last=0):
-	with open(MOD_RESULT, 'w') as f:
-		writer = csv.writer(f, lineterminator='\n', delimiter = '\t')
-		if last == 1:
-			writer.writerows([["文ID", "開始位置", "終了位置", "前文脈", "注釈該当部", "後文脈", "品詞カテゴリ"]])
-		writer.writerows(outdata)
 
 #############################################################
 # マッチスパンから重複してるスパンだけを抽出
@@ -130,36 +125,27 @@ def collectPOS(outdata):
 				collected[sentid, span][0].append(mweid)
 	return collected
 
-	# for group in outdata:
-	# 	samesentspan = defaultdict(list)
-	# 	for token in group:
-	# 		samesentspan[(token[1],token[2],token[3])].append(token)	# sentid, begin, end
+#########################
+#	出力整形
+#########################
+def forAnnotate(outdata):
+	output = []
+	for (sentid, span), token in outdata.items():
+		mweids = ",".join(token[0])
+		output.append(["\t".join(token[1:]) + "\t" + mweids])
+	return output
 
-	# 	for key, tokens in samesentspan.items():
-	# 		posmean = defaultdict(list)
-	# 		newtoken, mweids = [], []
-	# 		for token in tokens:
-	# 			if len(token) == 1:
-	# 				newoutdata.append(token[1:])
-	# 				forus.append(token)
-	# 				break
-	# 			else:
-	# 				newtoken, newtoken2 = token[1:], token[0:]
-	# 				# newtoken, newtoken2 = token[1:-1], token[0:-1]
-	# 				mweids.append(token[0])
-	# 				posmean[token[0]].append(token[-1])
+#########################
+#	tsv 出力
+#########################
+def writeTSV(path, output, last=0):
+	with open(path, 'w') as f:
+		writer = csv.writer(f, lineterminator='\n', delimiter = '\t')
+		if last == 1:
+			writer.writerows([["文ID", "開始位置", "終了位置", "前文脈", "注釈該当部", "後文脈", "品詞カテゴリ"]])
+		writer.writerows(output)
 
-	# 		# newtoken2.append(posmean)
-	# 		posmean, idlist = dictShape(posmean)
-	# 		newtoken.append(posmean)
-	# 		newtoken2.append(idlist)
-
-	# 		newoutdata.append(newtoken)
-	# 		forus.append(newtoken2)
-
-
-def proc(srcfile, outpath2, internal):
-
+def proc(srcfile, outpath):
 	# (同一品詞∧同一スパン)を集約して抽出
 	srcdata, matchspan = data(srcfile)
 	# print(len(srcdata))  # train, test, dev: 8723, 4609, 1658
@@ -173,12 +159,11 @@ def proc(srcfile, outpath2, internal):
 	# print(len(outdata))  # train, test, dev: 5820, 3092, 1131
 	# print(outdata[("950131057-009", (35, 38))])
 
-	# アノテーション用出力整形
-	forAnnotate()
+	# 出力整形
+	output = forAnnotate(outdata)
 	# outdata = sortMWE(outdata)
 
-	# writeCSV(outpath2, outdata, last=1)
-	# writeCSV(internal, forme)
+	writeTSV(outpath, output)
 
 def main():
 	args = sys.argv
@@ -188,16 +173,14 @@ def main():
 	if args[1] == "-ud":
 		for ftype in ["train", "test", "dev"]:
 			print("ftype: ", ftype)
-			fpath1 = "../../result/ud/ud_matced_{}_1222.csv".format(ftype)
-			outpath2 = "../../result/ud/ud_matced_{}_0128_rmoneword.tsv".format(ftype)
-			internal = "../../result/ud/ud_matced_{}_0128_rmoneword_naibu.tsv".format(ftype)
-			proc(fpath1, outpath2, internal)
+			fpath = "../../result/ud/ud_matced_{}_1222.csv".format(ftype)
+			outpath = "../../result/ud/ud_matced_{}_0128_edited.tsv".format(ftype)
+			proc(fpath, outpath)
 
 	elif args[1] == "-bccwj":
-		fpath1 = "../../result/bccwj/bccwj_matced_1208.csv"
-		outpath2 = "../../result/ud/bccwj_matced_1208_rmoneword.tsv"
-		internal = "../../result/ud/bccwj_matced_1208_rmoneword_naibu.tsv"
-		proc(fpath1, outpath2, internal)
+		fpath = "../../result/bccwj/bccwj_matced_0128.csv"
+		outpath = "../../result/bccwj/bccwj_matced_0128_edited.tsv"
+		proc(fpath, outpath)
 
 
 
