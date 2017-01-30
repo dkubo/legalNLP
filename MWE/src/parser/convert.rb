@@ -182,7 +182,8 @@ def sentloop(sentence, m, newpos, jsondict, sentid)
 		else
 			newvalues.push(sentpart)
 		end
-		totallen += sentpart[1].length
+		totallen += sentpart[8].length
+		# totallen += sentpart[1].length # 2列目を使うと，文字スパンが合わない箇所がある(もとのUDコーパスのミスが原因)
 		if sentid == "950131057-009"
 			p "---------------------------"
 			p sentpart[1]
